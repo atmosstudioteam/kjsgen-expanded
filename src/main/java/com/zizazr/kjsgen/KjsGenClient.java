@@ -7,6 +7,7 @@ import com.zizazr.kjsgen.integration.net.ClientEditSession;
 import com.zizazr.kjsgen.templates.JsonLayoutLoader;
 import com.zizazr.kjsgen.templates.UserLayoutStore;
 import com.zizazr.kjsgen.ui.vanilla.VanillaEditorScreen;
+import com.zizazr.kjsgen.ui.vanilla.VanillaRemovalsScreen;
 import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.ReloadListenerRegistry;

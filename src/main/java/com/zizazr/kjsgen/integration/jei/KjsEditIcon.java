@@ -8,18 +8,27 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * The icon drawn on the "edit in kjsgen" recipe button. A 16x16 source PNG
- * (white glyph on transparent, so JEI's grayscale button tint brightens it on
- * hover and dims it when disabled, exactly like the bookmark icon) scaled to a
- * {@value #SIZE}px footprint so it sits inside JEI's 13px button like the
- * bookmark star.
+ * The icon drawn on a kjsgen JEI recipe button ("edit" / "remove"). A white-glyph
+ * PNG (transparent background, so JEI's grayscale button tint brightens it on hover
+ * and dims it when disabled, exactly like the bookmark icon) scaled to a
+ * {@value #SIZE}px footprint so it sits inside JEI's 13px button like the bookmark star.
  */
 final class KjsEditIcon implements IDrawable {
     /** Drawn size in px (JEI recipe buttons are 13x13; the bookmark icon is 9x9). */
     private static final int SIZE = 11;
-    /** Source texture pixel dimensions. */
-    private static final int TEX = 16;
-    private static final ResourceLocation TEXTURE = KjsGen.rl("textures/gui/jei_edit.png");
+
+    private final ResourceLocation texture;
+    /** Source texture pixel dimensions (square). */
+    private final int tex;
+
+    /**
+     * @param textureFile file name under {@code textures/gui/}, e.g. {@code "jei_edit.png"}
+     * @param texSize     the PNG's pixel size (square), e.g. 16
+     */
+    KjsEditIcon(String textureFile, int texSize) {
+        this.texture = KjsGen.rl("textures/gui/" + textureFile);
+        this.tex = texSize;
+    }
 
     @Override
     public int getWidth() {
@@ -33,8 +42,8 @@ final class KjsEditIcon implements IDrawable {
 
     @Override
     public void draw(GuiGraphics guiGraphics, int xOffset, int yOffset) {
-        // 1.21.1 blit: (texture, x, y, destW, destH, u, v, regionW, regionH, texW, texH) — scales 16 -> SIZE
-        guiGraphics.blit(TEXTURE, xOffset, yOffset, SIZE, SIZE, 0f, 0f, TEX, TEX, TEX, TEX);
+        // 1.21.1 blit: (texture, x, y, destW, destH, u, v, regionW, regionH, texW, texH) — scales tex -> SIZE
+        guiGraphics.blit(texture, xOffset, yOffset, SIZE, SIZE, 0f, 0f, tex, tex, tex, tex);
     }
 }
 //?}
