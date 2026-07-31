@@ -17,8 +17,9 @@ import java.util.List;
  * <h2>Sequenced assembly ({@code "sequence"})</h2>
  * A {@code input} slot (the ingredient the sequence starts from), a
  * {@code transitional} item slot (the in-progress item Create carries between
- * stages) and up to three {@code output}/{@code output2}/{@code output3} results
- * with a chance each. The ordered stage list lives in the {@code seqLen} param
+ * stages) and a dynamic {@code output} result list (entries keyed
+ * {@code output0}, {@code output1}, ...), each with a chance. The ordered stage
+ * list lives in the {@code seqLen} param
  * (step count) with one step per index: its type in param {@code seq{i}} and its
  * optional ingredient in slot {@code seqItem{i}}.
  */

@@ -68,6 +68,16 @@ final class VanillaTheme {
         g.hLine(x1, x2, y, PANEL_BORDER);
     }
 
+    /** A small themed checkbox box (shared by the import list and boolean toggles). */
+    static void checkbox(GuiGraphics g, int x, int y, int size, boolean on, boolean highlight) {
+        g.fill(x, y, x + size, y + size, SECTION_BG);
+        g.renderOutline(x, y, size, size, on || highlight ? ACCENT : TEXT_DIM);
+        if (on) {
+            int inset = Math.max(2, size / 4);
+            g.fill(x + inset, y + inset, x + size - inset, y + size - inset, ACCENT);
+        }
+    }
+
     // ---- content -> renderable icon --------------------------------------
 
     /** The item stack used to visualise a slot's content (bucket proxy for fluids). */

@@ -24,6 +24,8 @@ public final class RecipeProject {
     /** Run the vanilla "/reload" command right after a successful export. */
     private boolean reloadOnExport = false;
     private final List<RecipeInstance> recipes = new ArrayList<>();
+    /** Recipe-removal filters, exported as {@code event.remove(...)} lines. */
+    private final List<RemovalRule> removals = new ArrayList<>();
 
     public RecipeProject(String name) {
         this.name = name;
@@ -117,6 +119,38 @@ public final class RecipeProject {
                 .orElse("");
     }
 
+    public List<RemovalRule> removals() {
+        return removals;
+    }
+
+    public Optional<RemovalRule> removalByUid(String uid) {
+        return removals.stream().filter(r -> r.uid().equals(uid)).findFirst();
+    }
+
+    /** The removal rule targeting exactly this recipe id, if one exists (JEI button dedupe). */
+    public Optional<RemovalRule> removalByRecipeId(String recipeId) {
+        return removals.stream().filter(r -> r.recipeId().equals(recipeId)).findFirst();
+    }
+
+    public void addRemoval(RemovalRule rule) {
+        removals.add(rule);
+    }
+
+    public void removeRemoval(String uid) {
+        removals.removeIf(r -> r.uid().equals(uid));
+    }
+
+    /** Replace the rule with the same uid in place, or append it (upsert; mirrors {@link #replace}). */
+    public void replaceRemoval(RemovalRule rule) {
+        for (int i = 0; i < removals.size(); i++) {
+            if (removals.get(i).uid().equals(rule.uid())) {
+                removals.set(i, rule);
+                return;
+            }
+        }
+        removals.add(rule);
+    }
+
     /** Effective export file of a recipe (recipe override or project default). */
     public String targetFileOf(RecipeInstance recipe) {
         return recipe.targetFile().isEmpty() ? defaultTargetFile : recipe.targetFile();
@@ -141,6 +175,9 @@ public final class RecipeProject {
         JsonArray arr = new JsonArray();
         recipes.forEach(r -> arr.add(r.toJson()));
         json.add("recipes", arr);
+        JsonArray rem = new JsonArray();
+        removals.forEach(r -> rem.add(r.toJson()));
+        json.add("removals", rem);
         return json;
     }
 
@@ -150,7 +187,15 @@ public final class RecipeProject {
         if (json.has("exportComments")) project.exportComments = json.get("exportComments").getAsBoolean();
         if (json.has("reloadOnExport")) project.reloadOnExport = json.get("reloadOnExport").getAsBoolean();
         if (json.has("recipes")) {
-            json.getAsJsonArray("recipes").forEach(e -> project.recipes.add(RecipeInstance.fromJson(e.getAsJsonObject())));
+            json.getAsJsonArray("recipes").forEach(e -> {
+                RecipeInstance recipe = RecipeInstance.fromJson(e.getAsJsonObject());
+                RecipeTypeRegistry.get(recipe.typeId()).ifPresent(recipe::migrateLegacyListSlots);
+                project.recipes.add(recipe);
+            });
+        }
+        if (json.has("removals")) {
+            json.getAsJsonArray("removals").forEach(e ->
+                    project.removals.add(RemovalRule.fromJson(e.getAsJsonObject())));
         }
         return project;
     }

@@ -138,7 +138,10 @@ public class TemplateRecipeCodegen implements RecipeCodegen {
 
     private static String joinSlots(RecipeInstance recipe, RecipeTypeDefinition type, SlotRole role) {
         return type.slotsByRole(role).stream()
-                .map(slot -> recipe.slot(slot.key()))
+                // a list slot contributes all of its entries; a fixed slot its single content
+                .flatMap(slot -> slot.list()
+                        ? recipe.listSlots(slot.key()).stream()
+                        : java.util.stream.Stream.of(recipe.slot(slot.key())))
                 .filter(content -> !content.isEmpty())
                 .map(content -> role == SlotRole.OUTPUT ? JsUtil.output(content) : JsUtil.ingredient(content))
                 .reduce((a, b) -> a + ", " + b)

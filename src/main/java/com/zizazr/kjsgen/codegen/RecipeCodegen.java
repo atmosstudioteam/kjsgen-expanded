@@ -11,6 +11,10 @@ import java.util.Optional;
  */
 @FunctionalInterface
 public interface RecipeCodegen {
+    /** The standard recipes-event wrapper (also hosts project-level {@code event.remove} lines). */
+    String RECIPES_EVENT_HEADER = "ServerEvents.recipes(event => {";
+    String RECIPES_EVENT_FOOTER = "})";
+
     /**
      * @return a single JS statement (may span multiple lines), without
      *         indentation and without a trailing newline, e.g.
@@ -24,11 +28,11 @@ public interface RecipeCodegen {
      * (e.g. brewing via MoreJS uses a different event than regular recipes).
      */
     default String wrapperHeader() {
-        return "ServerEvents.recipes(event => {";
+        return RECIPES_EVENT_HEADER;
     }
 
     default String wrapperFooter() {
-        return "})";
+        return RECIPES_EVENT_FOOTER;
     }
 
     /**

@@ -30,8 +30,7 @@ public class CreateSequencedAssemblyCodegen implements RecipeCodegen {
         String input = JsUtil.ingredient(recipe.slot("input"));
 
         StringBuilder outs = new StringBuilder();
-        for (String key : new String[]{"output", "output2", "output3"}) {
-            SlotContent content = recipe.slot(key);
+        for (SlotContent content : recipe.listSlots("output")) {
             if (content.isEmpty()) {
                 continue;
             }

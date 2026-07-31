@@ -2,6 +2,7 @@ package com.zizazr.kjsgen.ui.vanilla;
 
 import com.zizazr.kjsgen.core.RecipeInstance;
 import com.zizazr.kjsgen.core.RecipeProject;
+import com.zizazr.kjsgen.core.RemovalRule;
 import com.zizazr.kjsgen.integration.kubejs.ScriptAssembler;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -40,9 +41,14 @@ public final class VanillaCodePreviewScreen extends VanillaDialogScreen {
 
         lines.clear();
         Map<String, List<RecipeInstance>> byFile = project.recipesByTargetFile();
+        List<RemovalRule> removals = project.removals().stream().filter(r -> !r.isEmpty()).toList();
+        if (!removals.isEmpty()) {
+            byFile.computeIfAbsent(project.defaultTargetFile(), f -> List.of());
+        }
         for (Map.Entry<String, List<RecipeInstance>> e : byFile.entrySet()) {
             lines.add(new Line("// " + e.getKey() + ".js", true));
-            String code = ScriptAssembler.assemble(project, e.getValue());
+            String code = ScriptAssembler.assemble(project, e.getValue(),
+                    e.getKey().equals(project.defaultTargetFile()) ? removals : List.of());
             for (String line : code.split("\n", -1)) {
                 lines.add(new Line(line, false));
             }

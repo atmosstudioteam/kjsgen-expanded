@@ -8,9 +8,11 @@ import com.google.gson.JsonParser;
 import com.zizazr.kjsgen.core.ProjectManager;
 import com.zizazr.kjsgen.core.RecipeInstance;
 import com.zizazr.kjsgen.core.RecipeProject;
+import com.zizazr.kjsgen.core.RemovalRule;
 import com.zizazr.kjsgen.ui.vanilla.CollabScreens;
 import com.zizazr.kjsgen.ui.vanilla.VanillaEditorScreen;
 import com.zizazr.kjsgen.ui.vanilla.VanillaProjectsScreen;
+import com.zizazr.kjsgen.ui.vanilla.VanillaRemovalsScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
@@ -184,6 +186,27 @@ public final class ClientEditSession {
         KjsGenNet.toServer(KjsGenNet.OP_REMOVE_RECIPE, GSON.toJson(body));
     }
 
+    /** Upsert one removal rule (whole-rule, last-write-wins). No-op in local mode. */
+    public static void pushRemoval(RemovalRule rule) {
+        if (!remote) {
+            return;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("project", project().name());
+        body.add("removal", rule.toJson());
+        KjsGenNet.toServer(KjsGenNet.OP_UPSERT_REMOVAL, GSON.toJson(body));
+    }
+
+    public static void removeRemoval(String uid) {
+        if (!remote) {
+            return;
+        }
+        JsonObject body = new JsonObject();
+        body.addProperty("project", project().name());
+        body.addProperty("uid", uid);
+        KjsGenNet.toServer(KjsGenNet.OP_REMOVE_REMOVAL, GSON.toJson(body));
+    }
+
     /** Push the project's meta fields (name + export options). No-op in local mode. */
     public static void pushMeta() {
         if (!remote) {
@@ -259,6 +282,18 @@ public final class ClientEditSession {
             case KjsGenNet.OP_REMOVE_RECIPE -> {
                 if (matches(body)) {
                     project().recipeByUid(body.get("uid").getAsString()).ifPresent(project()::remove);
+                    refreshEditor();
+                }
+            }
+            case KjsGenNet.OP_UPSERT_REMOVAL -> {
+                if (matches(body)) {
+                    project().replaceRemoval(RemovalRule.fromJson(body.getAsJsonObject("removal")));
+                    refreshEditor();
+                }
+            }
+            case KjsGenNet.OP_REMOVE_REMOVAL -> {
+                if (matches(body)) {
+                    project().removeRemoval(body.get("uid").getAsString());
                     refreshEditor();
                 }
             }
@@ -342,6 +377,8 @@ public final class ClientEditSession {
     private static void refreshEditor() {
         if (Minecraft.getInstance().screen instanceof VanillaEditorScreen es) {
             es.refreshFromSession();
+        } else if (Minecraft.getInstance().screen instanceof VanillaRemovalsScreen rs) {
+            rs.refreshFromSession();
         }
     }
 

@@ -146,6 +146,40 @@ public final class RecipeInstance {
         }
     }
 
+    /**
+     * Fold legacy fixed-slot data into a list slot after a layout was converted from
+     * several numbered slots ({@code output}, {@code output2}, {@code output3}) into a
+     * single {@code list} slot. Runs on load; a no-op when the slot already holds list
+     * entries ({@code key0}, {@code key1}, ... — e.g. the former {@code in0..in3} keys
+     * which already match the list encoding) or when there is no legacy data.
+     */
+    public void migrateLegacyListSlots(RecipeTypeDefinition type) {
+        for (SlotDefinition def : type.slots()) {
+            String base = def.key();
+            if (!def.list() || !listSlots(base).isEmpty()) {
+                continue;
+            }
+            // legacy keys, in order: the un-indexed base, then base+"2", base+"3", ...
+            java.util.List<SlotContent> legacy = new java.util.ArrayList<>();
+            if (slots.containsKey(base)) {
+                legacy.add(slots.get(base));
+            }
+            for (int i = 2; slots.containsKey(base + i); i++) {
+                legacy.add(slots.get(base + i));
+            }
+            if (legacy.isEmpty()) {
+                continue;
+            }
+            slots.remove(base);
+            for (int i = 2; slots.remove(base + i) != null; i++) {
+                // drop the old contiguous numbered keys
+            }
+            for (int i = 0; i < legacy.size(); i++) {
+                slots.put(base + i, legacy.get(i));
+            }
+        }
+    }
+
     /** Parameter value or the definition default when unset. */
     public String param(RecipeTypeDefinition type, String key) {
         String value = parameters.get(key);

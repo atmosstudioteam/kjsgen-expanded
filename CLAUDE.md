@@ -106,5 +106,5 @@ docs-search-agent, чтобы проверить...") — that reliably forces d
   a player-facing feature.
 - Export uses marker blocks `// kjsgen:start <project>` / `// kjsgen:end <project>` inside
   `kubejs/server_scripts/`; re-export replaces only that block.
-- See [README.md](README.md) (Russian) for the full feature list and the addon API for third-party
+- See [README.md](README.md) for the full feature list and the addon API for third-party
   mods contributing recipe types.

@@ -63,7 +63,7 @@ final class JeiEditButtonController implements IIconButtonController {
 
     /** Registered with JEI in {@code registerAdvanced}; makes one controller per recipe layout. */
     static final class Factory implements IRecipeButtonControllerFactory {
-        private final IDrawable icon = new KjsEditIcon();
+        private final IDrawable icon = new KjsEditIcon("jei_edit.png", 16);
 
         @Override
         public <T> IIconButtonController createButtonController(IRecipeLayoutDrawable<T> recipeLayoutDrawable) {

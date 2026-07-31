@@ -10,6 +10,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -97,9 +98,11 @@ public final class VanillaSlotEditScreen extends VanillaDialogScreen {
     /**
      * Edit an arbitrary piece of content, writing the result back through {@code sink}.
      * Used for list-slot entries, where the storage key ("in0", "in1", ...) differs
-     * from the layout slot key and clearing must compact the list.
+     * from the layout slot key and clearing must compact the list. The parent may be the
+     * editor or any other kjsgen dialog (e.g. the removals screen); {@code markDirty} is only
+     * dispatched when it actually is the editor.
      */
-    public VanillaSlotEditScreen(VanillaEditorScreen parent, SlotDefinition slotDef, String titleKey,
+    public VanillaSlotEditScreen(Screen parent, SlotDefinition slotDef, String titleKey,
                                  SlotContent initial, java.util.function.Consumer<SlotContent> sink) {
         super(parent, Component.translatable("kjsgen.ui.edit_slot", titleKey));
         this.slotDef = slotDef;
@@ -227,7 +230,9 @@ public final class VanillaSlotEditScreen extends VanillaDialogScreen {
                 .bounds(leftX, by, bw3, 18).build());
         addRenderableWidget(Button.builder(Component.translatable("kjsgen.ui.clear"), b -> {
             sink.accept(SlotContent.EMPTY);
-            ((VanillaEditorScreen) parent).markDirty();
+            if (parent instanceof VanillaEditorScreen editor) {
+                editor.markDirty();
+            }
             onClose();
         }).bounds(leftX + bw3 + 4, by, bw3, 18).build());
         addRenderableWidget(Button.builder(Component.translatable("kjsgen.ui.cancel"), b -> onClose())
@@ -302,7 +307,9 @@ public final class VanillaSlotEditScreen extends VanillaDialogScreen {
             SlotPicks.addRecent(kind, id);
         }
         sink.accept(buildContent());
-        ((VanillaEditorScreen) parent).markDirty();
+        if (parent instanceof VanillaEditorScreen editor) {
+            editor.markDirty();
+        }
         onClose();
     }
 

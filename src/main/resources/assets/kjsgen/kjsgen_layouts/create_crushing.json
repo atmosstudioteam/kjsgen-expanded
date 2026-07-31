@@ -3,13 +3,11 @@
   "jei": "create:crushing",
   "mod": "create",
   "icon": "create:crushing_wheel",
-  "width": 82,
+  "width": 116,
   "height": 58,
   "slots": [
     { "key": "input", "role": "INPUT", "x": 0, "y": 19, "required": true, "item": true, "tag": true },
-    { "key": "output", "role": "OUTPUT", "x": 60, "y": 0, "required": true, "item": true, "count": true, "chance": true },
-    { "key": "output2", "role": "OUTPUT", "x": 60, "y": 20, "required": false, "item": true, "count": true, "chance": true },
-    { "key": "output3", "role": "OUTPUT", "x": 60, "y": 40, "required": false, "item": true, "count": true, "chance": true }
+    { "key": "output", "role": "OUTPUT", "x": 60, "y": 0, "required": true, "item": true, "count": true, "chance": true, "list": true }
   ],
   "decorations": [
     { "type": "ARROW", "x": 26, "y": 20 }

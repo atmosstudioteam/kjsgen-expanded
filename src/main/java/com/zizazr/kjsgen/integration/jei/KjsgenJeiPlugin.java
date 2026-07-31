@@ -34,6 +34,7 @@ public class KjsgenJeiPlugin implements IModPlugin {
     @Override
     public void registerAdvanced(IAdvancedRegistration registration) {
         registration.addRecipeButtonFactory(new JeiEditButtonController.Factory());
+        registration.addRecipeButtonFactory(new JeiDeleteButtonController.Factory());
     }
 
     @Override

@@ -28,9 +28,14 @@ final class VanillaSequencePanel {
     // ---- geometry captured each frame (reused by the click handlers) -----
     private int rx, ry, rw, rh;
     private int listTop, listBottom;
-    private int[] slotX = new int[5];
+    private int[] slotX = new int[2];
     private int slotY;
-    private static final String[] FIXED = {"input", "transitional", "output", "output2", "output3"};
+    /** The two positional slots that always exist; the results follow as a dynamic list. */
+    private static final String[] FIXED = {"input", "transitional"};
+    /** Horizontal gap between one result slot and the next (18px slot + 2px). */
+    private static final int OUT_STEP = 20;
+    private int outputX0;
+    private int outputShown;
 
     // ---- scroll / drag state --------------------------------------------
     private int scroll;
@@ -48,19 +53,16 @@ final class VanillaSequencePanel {
         Font font = Minecraft.getInstance().font;
         VanillaTheme.section(g, x, y, w, h);
 
-        // ---- top strip: fixed slots with tiny labels -------------------
+        // ---- top strip: two fixed slots + the dynamic result list ------
         slotY = y + 16;
         int inX = x + 6;
         int transX = inX + 22 + 12;
-        int outX = transX + 22 + 18;
+        outputX0 = transX + 22 + 18;
         slotX[0] = inX;
         slotX[1] = transX;
-        slotX[2] = outX;
-        slotX[3] = outX + 20;
-        slotX[4] = outX + 40;
         label(g, font, "in", inX, slotY - 9);
         label(g, font, "item", transX, slotY - 9);
-        label(g, font, "out", outX, slotY - 9);
+        label(g, font, "out", outputX0, slotY - 9);
         for (int i = 0; i < FIXED.length; i++) {
             int sx = slotX[i];
             boolean hovered = hover(mouseX, mouseY, sx, slotY);
@@ -70,6 +72,21 @@ final class VanillaSequencePanel {
                 g.renderOutline(sx, slotY, 18, 18, VanillaTheme.ERROR);
             }
         }
+        // results: one slot per entry (at least one placeholder), then a trailing '+'
+        java.util.List<SlotContent> outputs = recipe.listSlots("output");
+        outputShown = Math.max(1, outputs.size());
+        boolean outIssue = editor.hasSlotIssue("output");
+        for (int i = 0; i < outputShown; i++) {
+            int sx = outputX0 + i * OUT_STEP;
+            boolean hovered = hover(mouseX, mouseY, sx, slotY);
+            VanillaTheme.slot(g, sx, slotY, hovered);
+            editor.drawSlotContent(g, sx, slotY, i < outputs.size() ? outputs.get(i) : SlotContent.EMPTY);
+            if (outIssue) {
+                g.renderOutline(sx, slotY, 18, 18, VanillaTheme.ERROR);
+            }
+        }
+        int plusX = outputX0 + outputShown * OUT_STEP;
+        editor.drawPlusButton(g, plusX, slotY, hover(mouseX, mouseY, plusX, slotY));
 
         // ---- stages heading + divider ----------------------------------
         int headY = slotY + 22;
@@ -201,6 +218,19 @@ final class VanillaSequencePanel {
                 return true;
             }
         }
+        // result list entries + the trailing '+' cell (which appends)
+        for (int i = 0; i <= outputShown; i++) {
+            if (hit(mouseX, mouseY, outputX0 + i * OUT_STEP, slotY)) {
+                int size = recipe.listSlots("output").size();
+                if (button == 1 && i < size) {
+                    recipe.setListSlot("output", i, SlotContent.EMPTY);
+                    editor.markDirty();
+                } else if (button != 1) {
+                    openOutputEditor(editor, recipe, type, i);
+                }
+                return true;
+            }
+        }
 
         if (mouseY < listTop || mouseY > listBottom) {
             return false;
@@ -266,6 +296,18 @@ final class VanillaSequencePanel {
         int step = button == 1 ? -1 : 1;
         int next = (at + step + types.size()) % types.size();
         CreateSpecialModel.setStepType(recipe, idx, types.get(next).id());
+    }
+
+    private void openOutputEditor(VanillaEditorScreen editor, RecipeInstance recipe,
+                                  RecipeTypeDefinition type, int index) {
+        SlotDefinition def = type.slot("output").orElse(null);
+        if (def == null) {
+            return;
+        }
+        java.util.List<SlotContent> outputs = recipe.listSlots("output");
+        SlotContent initial = index < outputs.size() ? outputs.get(index) : SlotContent.EMPTY;
+        Minecraft.getInstance().setScreen(new VanillaSlotEditScreen(editor, def, "output[" + (index + 1) + "]",
+                initial, content -> recipe.setListSlot("output", index, content)));
     }
 
     private void openStepItemEditor(VanillaEditorScreen editor, RecipeInstance recipe, int idx, StepType st) {

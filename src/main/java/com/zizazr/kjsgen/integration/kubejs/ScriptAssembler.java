@@ -8,9 +8,11 @@ import com.zizazr.kjsgen.core.RecipeInstance;
 import com.zizazr.kjsgen.core.RecipeProject;
 import com.zizazr.kjsgen.core.RecipeTypeDefinition;
 import com.zizazr.kjsgen.core.RecipeTypeRegistry;
+import com.zizazr.kjsgen.core.RemovalRule;
 import com.zizazr.kjsgen.core.SlotContent;
 import com.zizazr.kjsgen.core.SlotRole;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +31,16 @@ public final class ScriptAssembler {
 
     /** JS text of one export block (without the kjsgen start/end markers). */
     public static String assemble(RecipeProject project, List<RecipeInstance> recipes) {
+        return assemble(project, recipes, List.of());
+    }
+
+    /** JS text of one export block; {@code removals} are emitted first, inside the recipes event. */
+    public static String assemble(RecipeProject project, List<RecipeInstance> recipes,
+                                  List<RemovalRule> removals) {
         // group by wrapper, preserving recipe order
         Map<String, StringBuilder> byWrapper = new LinkedHashMap<>();
         Map<String, String> footers = new LinkedHashMap<>();
+        appendRemovals(project, removals, byWrapper, footers);
         for (RecipeInstance recipe : recipes) {
             RecipeTypeDefinition type = RecipeTypeRegistry.get(recipe.typeId()).orElse(null);
             if (type == null) {
@@ -80,6 +89,69 @@ public final class ScriptAssembler {
             script.append(footers.get(header)).append("\n");
         });
         return script.toString();
+    }
+
+    /** Open the recipes-event wrapper (even with zero recipes) and emit one line per removal rule. */
+    private static void appendRemovals(RecipeProject project, List<RemovalRule> removals,
+                                       Map<String, StringBuilder> byWrapper, Map<String, String> footers) {
+        List<String> statements = new ArrayList<>();
+        for (RemovalRule rule : removals) {
+            removalStatement(rule).ifPresent(statements::add);
+        }
+        if (statements.isEmpty()) {
+            return;
+        }
+        StringBuilder body = byWrapper.computeIfAbsent(RecipeCodegen.RECIPES_EVENT_HEADER,
+                h -> new StringBuilder());
+        footers.put(RecipeCodegen.RECIPES_EVENT_HEADER, RecipeCodegen.RECIPES_EVENT_FOOTER);
+        if (project.exportComments()) {
+            body.append(INDENT).append("// recipe removals\n");
+        }
+        for (String statement : statements) {
+            body.append(INDENT).append(statement).append("\n");
+        }
+    }
+
+    /**
+     * One {@code event.remove(...)} line for a removal rule: the filled fields become one
+     * filter object (all must match); several inputs expand into an array of filter objects
+     * (any input matches). Empty rules produce nothing — a bare {@code event.remove({})}
+     * would wipe every recipe.
+     */
+    public static Optional<String> removalStatement(RemovalRule rule) {
+        if (rule.isEmpty()) {
+            return Optional.empty();
+        }
+        List<String> inputs = rule.inputs();
+        List<String> filters = new ArrayList<>();
+        if (inputs.isEmpty()) {
+            filters.add(removalFilter(rule, null));
+        } else {
+            for (String input : inputs) {
+                filters.add(removalFilter(rule, input));
+            }
+        }
+        return Optional.of(filters.size() == 1
+                ? "event.remove(" + filters.get(0) + ")"
+                : "event.remove([" + String.join(", ", filters) + "])");
+    }
+
+    /** {@code { output: '...', input: '...', mod: '...', id: '...' }} from the rule's filled fields. */
+    private static String removalFilter(RemovalRule rule, String input) {
+        List<String> pairs = new ArrayList<>();
+        if (!rule.output().isEmpty()) {
+            pairs.add("output: " + JsUtil.quote(rule.output()));
+        }
+        if (input != null && !input.isEmpty()) {
+            pairs.add("input: " + JsUtil.quote(input));
+        }
+        if (!rule.mod().isEmpty()) {
+            pairs.add("mod: " + JsUtil.quote(rule.mod()));
+        }
+        if (!rule.recipeId().isEmpty()) {
+            pairs.add("id: " + JsUtil.quote(rule.recipeId()));
+        }
+        return "{ " + String.join(", ", pairs) + " }";
     }
 
     /**

@@ -137,4 +137,21 @@ public class KjsGenClient
         ClientEditSession.pushRecipe(recipe);
         mc.setScreen(new VanillaEditorScreen(uid));
     }
+
+    /**
+     * Opens the removals screen ensuring a rule exists for {@code recipeId} (reusing an existing
+     * one). The rule is added by the screen itself — and re-added after the editor's snapshot
+     * arrives — so it survives the project being replaced when the session first goes remote.
+     * Called from the JEI "remove with kjsgen" recipe button.
+     */
+    public static void openRemovalsForRecipeId(String recipeId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!mayEdit(mc)) {
+            return;
+        }
+        // Show the editor first so it is initialized as the dialog's parent, then the dialog.
+        VanillaEditorScreen editor = new VanillaEditorScreen();
+        mc.setScreen(editor);
+        mc.setScreen(VanillaRemovalsScreen.forRecipeId(editor, recipeId));
+    }
 }

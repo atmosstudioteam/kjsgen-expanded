@@ -103,7 +103,14 @@ public class VanillaEditorScreen extends Screen {
     private int previewX, previewY, previewW, previewH;
 
     // ---- widgets ---------------------------------------------------------
-    private EditBox projectNameField;
+    private boolean showHeaderTitle = true;
+    /** The "hamburger" header button; hovering it reveals {@link #menuItems} (Save / Import JS / Reload). */
+    private Button menuButton;
+    private final List<AbstractWidget> menuItems = new ArrayList<>();
+    private int menuX, menuY, menuW, menuH;
+    private boolean menuOpen;
+    /** Right edge the collab head-icons grow leftwards from (was the project-name field, now the buttons). */
+    private int headerHeadsRightX;
     private final List<AbstractWidget> paramWidgets = new ArrayList<>();
     private final List<Component> paramLabels = new ArrayList<>();
 
@@ -142,46 +149,66 @@ public class VanillaEditorScreen extends Screen {
         }
         computeGeometry();
 
-        // ----- header: project name + action buttons (laid out right to left)
+        // ----- header: action buttons (laid out right to left). Save / Import JS / Reload live in a
+        // hover-menu behind the rightmost "hamburger" button; Projects and Export stay inline.
         int hy = panelY + 6;
         int hh = 16;
         int rightEdge = panelX + panelW - 8;
 
-        Button reload = Button.builder(Component.translatable("kjsgen.ui.reload"), b -> sendReloadCommand())
-                .bounds(0, hy, btnWidth("kjsgen.ui.reload"), hh).build();
+        int hamW = 18;
+        menuButton = Button.builder(Component.empty(), b -> { })
+                .bounds(rightEdge - hamW, hy, hamW, hh).build();
+
         Button export = Button.builder(Component.translatable("kjsgen.ui.export"), b -> openExport())
                 .bounds(0, hy, btnWidth("kjsgen.ui.export"), hh).build();
         Button projects = Button.builder(Component.translatable("kjsgen.ui.projects"), b -> openProjects())
                 .bounds(0, hy, btnWidth("kjsgen.ui.projects"), hh).build();
-        Button importJs = Button.builder(Component.translatable("kjsgen.ui.import_js"), b -> openImport())
-                .bounds(0, hy, btnWidth("kjsgen.ui.import_js"), hh).build();
-        Button save = Button.builder(Component.translatable("kjsgen.ui.save"), b -> saveProject(true))
-                .bounds(0, hy, btnWidth("kjsgen.ui.save"), hh).build();
-
-        reload.setX(rightEdge - reload.getWidth());
-        export.setX(reload.getX() - 4 - export.getWidth());
+        export.setX(menuButton.getX() - 4 - export.getWidth());
         projects.setX(export.getX() - 4 - projects.getWidth());
-        importJs.setX(projects.getX() - 4 - importJs.getWidth());
-        save.setX(importJs.getX() - 4 - save.getWidth());
 
-        int nameW = 96;
-        projectNameField = new EditBox(this.font, save.getX() - 6 - nameW, hy + 1, nameW, 14,
-                Component.translatable("kjsgen.ui.project_name"));
-        projectNameField.setMaxLength(64);
-        projectNameField.setValue(project.name());
-        projectNameField.setResponder(name -> {
-            if (!name.isBlank()) {
-                project.setName(name.trim());
-                scheduleMetaPush();
-            }
-        });
+        // dropdown items, right-aligned under the hamburger and directly adjoining it (no gap, so the
+        // hover region stays contiguous as the pointer travels from the button onto the list)
+        int itemH = 16;
+        menuW = Math.max(Math.max(btnWidth("kjsgen.ui.save"), btnWidth("kjsgen.ui.removals")),
+                Math.max(btnWidth("kjsgen.ui.import_js"), btnWidth("kjsgen.ui.reload")));
+        menuX = rightEdge - menuW;
+        menuY = hy + hh;
+        menuH = 4 * itemH;
+        Button save = Button.builder(Component.translatable("kjsgen.ui.save"),
+                        b -> { saveProject(true); menuOpen = false; })
+                .bounds(menuX, menuY, menuW, itemH).build();
+        Button importJs = Button.builder(Component.translatable("kjsgen.ui.import_js"),
+                        b -> { openImport(); menuOpen = false; })
+                .bounds(menuX, menuY + itemH, menuW, itemH).build();
+        Button removals = Button.builder(Component.translatable("kjsgen.ui.removals"),
+                        b -> { openRemovals(); menuOpen = false; })
+                .bounds(menuX, menuY + 2 * itemH, menuW, itemH).build();
+        Button reload = Button.builder(Component.translatable("kjsgen.ui.reload"),
+                        b -> { sendReloadCommand(); menuOpen = false; })
+                .bounds(menuX, menuY + 3 * itemH, menuW, itemH).build();
+        menuItems.clear();
+        menuItems.add(save);
+        menuItems.add(importJs);
+        menuItems.add(removals);
+        menuItems.add(reload);
+        for (AbstractWidget item : menuItems) {
+            item.visible = false;
+            item.active = false;
+        }
 
-        addRenderableWidget(projectNameField);
-        addRenderableWidget(save);
-        addRenderableWidget(importJs);
+        headerHeadsRightX = projects.getX() - 6;
+        // Hide the panel title if it would collide with the leftmost header button (huge GUI scale).
+        showHeaderTitle = panelX + 8 + this.font.width(this.title) + 8 <= projects.getX();
+
+        addRenderableWidget(menuButton);
         addRenderableWidget(projects);
         addRenderableWidget(export);
-        addRenderableWidget(reload);
+        // Menu items handle events (addWidget) but are drawn by hand at an elevated z (see render):
+        // the recipe-list item icons render at z=150 and would otherwise bleed over the dropdown.
+        addWidget(save);
+        addWidget(importJs);
+        addWidget(removals);
+        addWidget(reload);
 
         // ----- left: add recipe button (pinned to the bottom of the list column)
         Button addRecipe = Button.builder(Component.translatable("kjsgen.ui.add_recipe"), b -> openTypePicker())
@@ -273,12 +300,12 @@ public class VanillaEditorScreen extends Screen {
                 recipe::setTargetFile);
         addTextParam("kjsgen.ui.if_mod_loaded", recipe.conditionModLoaded(), "", ctrlW, null,
                 recipe::setConditionModLoaded);
-        CycleButton<Boolean> replaceToggle = CycleButton.onOffBuilder(recipe.replaceRecipe())
-                .create(0, 0, ctrlW, 14, Component.translatable("kjsgen.ui.replace_recipe"),
-                        (btn, v) -> {
-                            recipe.setReplaceRecipe(v);
-                            markDirty();
-                        });
+        VanillaCheckbox replaceToggle = new VanillaCheckbox(0, 0, ctrlW, 14,
+                Component.translatable("kjsgen.ui.replace_recipe"), false, recipe.replaceRecipe(),
+                v -> {
+                    recipe.setReplaceRecipe(v);
+                    markDirty();
+                });
         addParam(Component.translatable("kjsgen.ui.replace_recipe"), replaceToggle);
 
         for (ParameterDefinition param : type.parameters()) {
@@ -290,16 +317,11 @@ public class VanillaEditorScreen extends Screen {
             switch (param.type()) {
                 case BOOL -> {
                     boolean cur = Boolean.parseBoolean(value.isEmpty() ? param.defaultValue() : value);
-                    CycleButton<Boolean> toggle = CycleButton.<Boolean>builder(
-                                    b -> Component.literal(b ? "true" : "false"))
-                            .withValues(Boolean.TRUE, Boolean.FALSE)
-                            .displayOnlyValue()
-                            .withInitialValue(cur)
-                            .create(0, 0, ctrlW, 14, Component.empty(),
-                                    (btn, v) -> {
-                                        recipe.setParam(param.key(), Boolean.toString(v));
-                                        markDirty();
-                                    });
+                    VanillaCheckbox toggle = new VanillaCheckbox(0, 0, ctrlW, 14, label, false, cur,
+                            v -> {
+                                recipe.setParam(param.key(), Boolean.toString(v));
+                                markDirty();
+                            });
                     addParam(label, toggle);
                 }
                 case ENUM -> {
@@ -733,6 +755,12 @@ public class VanillaEditorScreen extends Screen {
         }
     }
 
+    private void openRemovals() {
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(new VanillaRemovalsScreen(this));
+        }
+    }
+
     /** Runs the vanilla "/reload" command through the client connection, if connected. */
     static void sendReloadCommand() {
         var connection = Minecraft.getInstance().getConnection();
@@ -760,7 +788,14 @@ public class VanillaEditorScreen extends Screen {
         }
 
         VanillaTheme.panel(g, panelX, panelY, panelW, panelH);
-        g.drawString(this.font, this.title, panelX + 8, panelY + 10, VanillaTheme.TEXT, true);
+        if (showHeaderTitle) {
+            g.drawString(this.font, this.title, panelX + 8, panelY + 10, VanillaTheme.TEXT, true);
+        }
+
+        // Hover state of the hamburger menu: open while the pointer is over the button or, once open,
+        // over the dropdown itself. Recomputed each frame so the menu items' visibility is current
+        // before the renderables loop draws them and before any click is dispatched.
+        updateMenuState(mouseX, mouseY);
 
         drawRecipeList(g, mouseX, mouseY);
         drawCanvas(g, mouseX, mouseY);
@@ -771,16 +806,26 @@ public class VanillaEditorScreen extends Screen {
         for (Renderable r : this.renderables) {
             r.render(g, mouseX, mouseY, partialTick);
         }
+        // the hamburger glyph sits on top of its button sprite
+        drawHamburgerIcon(g, mouseX, mouseY);
+        // the dropdown renders last, at an elevated z, so item icons can't bleed over it
+        if (menuOpen) {
+            g.pose().pushPose();
+            g.pose().translate(0, 0, 200f);
+            VanillaTheme.section(g, menuX, menuY, menuW, menuH);
+            for (AbstractWidget item : menuItems) {
+                item.render(g, mouseX, mouseY, partialTick);
+            }
+            g.pose().popPose();
+        }
 
-        // Presence head-icons sit in the header, just before the project name field. The remote
+        // Presence head-icons sit in the header, just before the leftmost header button. The remote
         // cursors themselves are drawn as a global top-most overlay (see KjsGenClient), so they
         // float above every widget and tooltip; here we only publish where our panel is.
         CollabCursors.setPanel(panelX, panelY);
-        if (projectNameField != null) {
-            List<Component> headTooltip = CollabHeads.render(g, projectNameField.getX() - 4, panelY + 6, mouseX, mouseY);
-            if (headTooltip != null) {
-                hoverTooltip = headTooltip;
-            }
+        List<Component> headTooltip = CollabHeads.render(g, headerHeadsRightX, panelY + 6, mouseX, mouseY);
+        if (headTooltip != null) {
+            hoverTooltip = headTooltip;
         }
 
         // A carried item hides the slot tooltip (it'd only cover the cursor) and follows the pointer.
@@ -791,6 +836,34 @@ public class VanillaEditorScreen extends Screen {
             g.pose().popPose();
         } else if (hoverTooltip != null) {
             g.renderComponentTooltip(this.font, hoverTooltip, mouseX, mouseY);
+        }
+    }
+
+    /** Open/close the hover menu and mirror the state onto its item widgets. */
+    private void updateMenuState(int mouseX, int mouseY) {
+        boolean overButton = menuButton != null
+                && inside(mouseX, mouseY, menuButton.getX(), menuButton.getY(),
+                          menuButton.getWidth(), menuButton.getHeight());
+        boolean overMenu = menuOpen && inside(mouseX, mouseY, menuX, menuY, menuW, menuH);
+        menuOpen = overButton || overMenu;
+        for (AbstractWidget item : menuItems) {
+            item.visible = menuOpen;
+            item.active = menuOpen;
+        }
+    }
+
+    /** Three stacked lines centered on the hamburger button (accented while its menu is open). */
+    private void drawHamburgerIcon(GuiGraphics g, int mouseX, int mouseY) {
+        if (menuButton == null) {
+            return;
+        }
+        boolean active = menuOpen || inside(mouseX, mouseY, menuButton.getX(), menuButton.getY(),
+                menuButton.getWidth(), menuButton.getHeight());
+        int cx = menuButton.getX() + menuButton.getWidth() / 2;
+        int cy = menuButton.getY() + menuButton.getHeight() / 2;
+        int color = active ? VanillaTheme.TEXT : VanillaTheme.TEXT_DIM;
+        for (int dy = -3; dy <= 3; dy += 3) {
+            g.fill(cx - 5, cy + dy, cx + 5, cy + dy + 1, color);
         }
     }
 
@@ -833,18 +906,27 @@ public class VanillaEditorScreen extends Screen {
                 g.fill(listX + 1, rowY, listX + listW - 1, rowY + ROW_H, VanillaTheme.ROW_HOVER);
             }
 
+            // recipe type icon + output item icon; the id/description moves into the hover tooltip
+            RecipeTypeDefinition rowType = RecipeTypeRegistry.get(recipe.typeId()).orElse(null);
+            if (rowType != null) {
+                g.renderItem(VanillaTheme.itemStack(rowType.iconItem()), listX + 3, rowY + 2);
+            }
             ItemStack icon = iconForRecipe(recipe);
             if (!icon.isEmpty()) {
-                g.renderItem(icon, listX + 3, rowY + 2);
+                g.renderItem(icon, listX + 22, rowY + 2);
             }
-            String label = this.font.plainSubstrByWidth(recipe.describe(), listW - 24 - 30);
-            g.drawString(this.font, label, listX + 22, rowY + 6, VanillaTheme.TEXT, true);
 
             // duplicate + delete glyph buttons on the right edge of the row
             int delX = listX + listW - 16;
             int dupX = delX - 15;
             drawDuplicateIcon(g, dupX, rowY + 5, hovered);
             drawDeleteIcon(g, delX + 3, rowY + 6, hovered);
+            if (hovered && mouseX < dupX - 2) {
+                hoverTooltip = List.of(
+                        Component.literal(recipe.describe()),
+                        Component.literal(rowType != null ? typeName(rowType) : recipe.typeId())
+                                .withStyle(s -> s.withColor(VanillaTheme.TEXT_DIM)));
+            }
 
             // Frame the row in the colour of any other operator who has this recipe open.
             drawRemoteRecipeMarkers(g, recipe.uid(), rowY);
@@ -914,7 +996,8 @@ public class VanillaEditorScreen extends Screen {
         }
         RecipeTypeDefinition type = RecipeTypeRegistry.get(recipe.typeId()).orElse(null);
         String typeName = type != null ? typeName(type) : recipe.typeId();
-        g.drawString(this.font, typeName, canvasBoxX, canvasBoxY - 10, VanillaTheme.TEXT, true);
+        g.drawString(this.font, this.font.plainSubstrByWidth(typeName, canvasBoxW),
+                canvasBoxX, canvasBoxY - 10, VanillaTheme.TEXT, true);
         VanillaTheme.section(g, canvasBoxX, canvasBoxY, canvasBoxW, canvasBoxH);
         if (type == null) {
             drawCenteredHint(g, Component.translatable("kjsgen.ui.unknown_type"));
@@ -1096,7 +1179,7 @@ public class VanillaEditorScreen extends Screen {
         }
     }
 
-    private void drawPlusButton(GuiGraphics g, int x, int y, boolean hovered) {
+    void drawPlusButton(GuiGraphics g, int x, int y, boolean hovered) {
         g.fill(x + 1, y + 1, x + 17, y + 17, VanillaTheme.SECTION_BG);
         g.renderOutline(x, y, 18, 18, hovered ? VanillaTheme.ACCENT : VanillaTheme.TEXT_DIM);
         int c = hovered ? VanillaTheme.TEXT : VanillaTheme.TEXT_DIM;
@@ -1199,18 +1282,24 @@ public class VanillaEditorScreen extends Screen {
 
     private void drawValidation(GuiGraphics g) {
         int y = canvasBoxY + canvasBoxH + 3;
-        int shown = 0;
+        int shown = 0; // lines, not issues: a wrapped message uses up part of the 3-line budget
+        outer:
         for (RecipeValidator.Issue issue : issues) {
-            if (shown >= 3) {
-                break;
-            }
             int color = issue.severity() == RecipeValidator.Severity.ERROR ? VanillaTheme.ERROR : VanillaTheme.WARN;
             Component msg = Component.translatable(issue.messageKey(), issue.args());
-            g.fill(canvasBoxX, y + 1, canvasBoxX + 3, y + 7, color);
-            String line = this.font.plainSubstrByWidth(msg.getString(), canvasBoxW - 6);
-            g.drawString(this.font, line, canvasBoxX + 6, y, color, true);
-            y += 10;
-            shown++;
+            boolean first = true;
+            for (net.minecraft.util.FormattedCharSequence line : this.font.split(msg, canvasBoxW - 6)) {
+                if (shown >= 3) {
+                    break outer;
+                }
+                if (first) {
+                    g.fill(canvasBoxX, y + 1, canvasBoxX + 3, y + 7, color);
+                    first = false;
+                }
+                g.drawString(this.font, line, canvasBoxX + 6, y, color, true);
+                y += 10;
+                shown++;
+            }
         }
         if (issues.isEmpty() && selectedRecipe().isPresent()) {
             g.fill(canvasBoxX, y + 1, canvasBoxX + 3, y + 7, VanillaTheme.OK_GREEN);
@@ -1235,8 +1324,14 @@ public class VanillaEditorScreen extends Screen {
             if (!w.visible) {
                 continue;
             }
-            String label = this.font.plainSubstrByWidth(paramLabels.get(i).getString(), 54);
-            g.drawString(this.font, label, paramX + 3, w.getY() + 3, VanillaTheme.TEXT_DIM, true);
+            // wrap the label to (at most) two lines instead of truncating it
+            List<net.minecraft.util.FormattedCharSequence> lines = this.font.split(paramLabels.get(i), 54);
+            if (lines.size() == 1) {
+                g.drawString(this.font, lines.get(0), paramX + 3, w.getY() + 3, VanillaTheme.TEXT_DIM, true);
+            } else {
+                g.drawString(this.font, lines.get(0), paramX + 3, w.getY() - 1, VanillaTheme.TEXT_DIM, true);
+                g.drawString(this.font, lines.get(1), paramX + 3, w.getY() + 8, VanillaTheme.TEXT_DIM, true);
+            }
         }
         g.disableScissor();
         drawScrollbar(g, paramX + paramW - 3, paramY, paramViewH, paramWidgets.size() * PARAM_ROW_H, paramScroll);

@@ -28,6 +28,9 @@ public final class CollabScreens {
         if (s instanceof VanillaExportScreen) {
             return "kjsgen.screen.export";
         }
+        if (s instanceof VanillaRemovalsScreen) {
+            return "kjsgen.screen.removals";
+        }
         if (s instanceof VanillaCodePreviewScreen) {
             return "kjsgen.screen.code_preview";
         }

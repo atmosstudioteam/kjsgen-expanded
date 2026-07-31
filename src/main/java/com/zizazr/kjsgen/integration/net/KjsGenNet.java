@@ -32,6 +32,8 @@ public final class KjsGenNet {
     public static final String OP_DELETE = "delete";
     public static final String OP_UPSERT_RECIPE = "upsertRecipe";
     public static final String OP_REMOVE_RECIPE = "removeRecipe";
+    public static final String OP_UPSERT_REMOVAL = "upsertRemoval";
+    public static final String OP_REMOVE_REMOVAL = "removeRemoval";
     public static final String OP_META = "meta";
     public static final String OP_EXPORT = "export";
     /** Live mouse position of one editor (panel-relative). Both directions. */

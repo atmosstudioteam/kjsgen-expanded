@@ -8,6 +8,7 @@ import com.zizazr.kjsgen.KjsGen;
 import com.zizazr.kjsgen.core.ProjectManager;
 import com.zizazr.kjsgen.core.RecipeInstance;
 import com.zizazr.kjsgen.core.RecipeProject;
+import com.zizazr.kjsgen.core.RemovalRule;
 import com.zizazr.kjsgen.integration.kubejs.KubeJsExporter;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -75,6 +76,13 @@ public final class ServerProjectStore {
                 }
                 case KjsGenNet.OP_REMOVE_RECIPE -> {
                     if (requireOp(player)) removeRecipe(player, str(body, "project"), str(body, "uid"));
+                }
+                case KjsGenNet.OP_UPSERT_REMOVAL -> {
+                    if (requireOp(player)) upsertRemoval(player, str(body, "project"),
+                            body.getAsJsonObject("removal"));
+                }
+                case KjsGenNet.OP_REMOVE_REMOVAL -> {
+                    if (requireOp(player)) removeRemoval(player, str(body, "project"), str(body, "uid"));
                 }
                 case KjsGenNet.OP_META -> {
                     if (requireOp(player)) updateMeta(player, str(body, "project"),
@@ -183,6 +191,24 @@ public final class ServerProjectStore {
         body.addProperty("project", name);
         body.addProperty("uid", uid);
         broadcast(player, key(name), KjsGenNet.OP_REMOVE_RECIPE, GSON.toJson(body));
+    }
+
+    private static void upsertRemoval(ServerPlayer player, String name, JsonObject removalJson) {
+        if (removalJson == null) return;
+        RecipeProject project = getOrLoad(name);
+        project.replaceRemoval(RemovalRule.fromJson(removalJson));
+        persist(project);
+        broadcast(player, key(name), KjsGenNet.OP_UPSERT_REMOVAL, wrap(name, "removal", removalJson));
+    }
+
+    private static void removeRemoval(ServerPlayer player, String name, String uid) {
+        RecipeProject project = getOrLoad(name);
+        project.removeRemoval(uid);
+        persist(project);
+        JsonObject body = new JsonObject();
+        body.addProperty("project", name);
+        body.addProperty("uid", uid);
+        broadcast(player, key(name), KjsGenNet.OP_REMOVE_REMOVAL, GSON.toJson(body));
     }
 
     private static void updateMeta(ServerPlayer player, String name, JsonObject meta) {

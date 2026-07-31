@@ -201,7 +201,7 @@ public final class VanillaImportScreen extends VanillaDialogScreen {
                 if (hovered) {
                     g.fill(listX + 1, ry, listX + listW - 1, ry + ROW_H, VanillaTheme.ROW_HOVER);
                 }
-                drawCheckbox(g, listX + 4, ry + 5, selected[i]);
+                VanillaTheme.checkbox(g, listX + 4, ry + 5, 8, selected[i], false);
 
                 ItemStack icon = iconFor(detected.get(i));
                 if (!icon.isEmpty()) {
@@ -217,14 +217,6 @@ public final class VanillaImportScreen extends VanillaDialogScreen {
         if (!detected.isEmpty()) {
             g.drawString(this.font, this.font.plainSubstrByWidth(status.getString(), w),
                     x, listY + listH + 3, VanillaTheme.TEXT_DIM, true);
-        }
-    }
-
-    private void drawCheckbox(GuiGraphics g, int x, int y, boolean on) {
-        g.fill(x, y, x + 8, y + 8, VanillaTheme.SECTION_BG);
-        g.renderOutline(x, y, 8, 8, on ? VanillaTheme.ACCENT : VanillaTheme.TEXT_DIM);
-        if (on) {
-            g.fill(x + 2, y + 2, x + 6, y + 6, VanillaTheme.ACCENT);
         }
     }
 

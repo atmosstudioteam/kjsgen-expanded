@@ -445,12 +445,31 @@ public final class JsRecipeParser {
         }
     }
 
-    /** Assign array elements to the slots of {@code role}, in layout order (output, output2, ... / in0, in1, ...). */
+    /**
+     * Assign array elements to the slots of {@code role}, in layout order. A fixed slot
+     * takes one element (output, output2, ...); a list slot ("in", "output", ...) absorbs
+     * all remaining elements into its contiguous {@code key + index} entries.
+     */
     private static void assignRoleList(RecipeInstance recipe, RecipeTypeDefinition type,
                                        SlotRole role, List<String> elems) {
         List<SlotDefinition> slots = type.slotsByRole(role);
-        for (int i = 0; i < slots.size() && i < elems.size(); i++) {
-            setSlot(recipe, slots.get(i).key(), parseForSlot(type, slots.get(i).key(), elems.get(i)));
+        int ei = 0;
+        for (SlotDefinition slot : slots) {
+            if (ei >= elems.size()) {
+                break;
+            }
+            if (slot.list()) {
+                int idx = 0;
+                for (; ei < elems.size(); ei++) {
+                    SlotContent content = parseForSlot(type, slot.key(), elems.get(ei));
+                    if (content != null && !content.isEmpty()) {
+                        recipe.setListSlot(slot.key(), idx++, content);
+                    }
+                }
+            } else {
+                setSlot(recipe, slot.key(), parseForSlot(type, slot.key(), elems.get(ei)));
+                ei++;
+            }
         }
     }
 

@@ -1,77 +1,70 @@
 # KubeJS Generator (kjsgen)
 
-Инструмент разработчика модпаков для **Minecraft 1.21.1 / NeoForge**: графический редактор рецептов
-в стиле JEI с экспортом в готовые **KubeJS**-скрипты (`kubejs/server_scripts/*.js`).
+A visual, JEI-style recipe editor for **Minecraft 1.21.1 / NeoForge** that exports
+ready-to-use **KubeJS** scripts (`kubejs/server_scripts/*.js`).
 
-Интерфейс построен на стандартных экранах Minecraft (`GuiGraphics` + ванильные виджеты),
-без сторонних UI-библиотек.
+The editor is built entirely on stock Minecraft screens (`GuiGraphics` + vanilla
+widgets) — no third-party UI library.
 
-## Возможности
+## Features
 
-- **Редактор рецептов** с раскладкой слотов как в JEI (слоты 18×18, стрелки/пламя из ванильных текстур).
-- Встроенные типы: Crafting (Shaped/Shapeless), Smelting, Blasting, Smoking, Campfire Cooking,
-  Stonecutting, Smithing (Transform/Trim), Brewing (через MoreJS).
-- Из коробки шаблоны для **Create** (pressing, crushing, mixing) и **Mekanism** (enriching, crushing) —
-  активны всегда, но экспортируются с обёрткой `if (Platform.isLoaded(...))`.
-- **Импорт layout'ов из JEI-плагинов**: кнопка «Импорт из JEI» в окне выбора типа считывает
-  категории рецептов всех установленных модов через JEI Runtime API — позиции и роли слотов
-  берутся из реального `IRecipeCategory#setRecipe` мода, поэтому раскладка совпадает с JEI
-  пиксель в пиксель. Синтаксис KubeJS для таких типов JEI не знает, поэтому импортированный тип
-  получает редактируемый параметр «Шаблон» с заготовкой
-  `event.recipes.<mod>.<type>([{outputs}], [{inputs}])` — поправьте под вики конкретного мода.
-  Импортированные layout'ы сохраняются в `<game dir>/kjsgen/layouts/*.json` (можно править руками)
-  и загружаются при старте даже без JEI.
-- **Живой JEI-рендер канваса**: для типов, импортированных из JEI, редактор рисует настоящую панель
-  категории мода (модель машины, стрелки, кастомный текст вроде «Heated») через `IRecipeLayoutDrawable`,
-  а выбранные предметы подставляются в реальные JEI-слоты (`createDisplayOverrides`). Клик по слоту
-  открывает обычный редактор, ПКМ — очищает. Работает только при установленном JEI и загруженном мире;
-  без него канвас откатывается на статическую раскладку из слотов 18×18 (она же — то, что сохраняется
-  и экспортируется).
-- **Редактор раскладки** (кнопка «Раскладка» над канвасом): тип рецепта открывается **прямо на живом
-  JEI-рендере** — панель мода рисуется как в JEI, и настоящие JEI-слоты перетаскиваются мышью
-  (позиции пишутся через `IRecipeSlotDrawable#setPosition`, машина/стрелки/текст остаются на месте).
-  Слоты можно удалять (JEI-слот паркуется за канвас) и добавлять новые (рисуются поверх панели);
-  редактируются ключи слотов (маппинг для шаблона кодогенерации), роли, допустимое содержимое,
-  обязательность, размер канваса и KubeJS-шаблон типа. Без JEI редактор откатывается на
-  статическую раскладку. Сохранённое попадает в `kjsgen/layouts/*.json` и применяется к живому
-  рендеру и в главном канвасе: перестановки видны, удалённые слоты скрыты, добавленные — поверх.
-- Слоты: предмет / тег предметов / жидкость / тег жидкости, количество, шанс выпадения, data-компоненты (SNBT).
-- Поиск предметов/тегов/жидкостей по id и названию.
-- Параметры рецепта: id, group, комментарий, целевой файл экспорта, условие «если мод загружен»,
-  время готовки, опыт и т.д.
-- **Валидация в реальном времени**: пустые обязательные слоты (красная рамка), некорректные id,
-  дублирующиеся id рецептов в проекте.
-- **Живой предпросмотр** сгенерированного KubeJS-кода.
-- **Проекты**: сохранение/загрузка в `<game dir>/kjsgen/projects/*.json`, независимо от экспорта.
-- **Умный экспорт**: блоки-маркеры `// kjsgen:start <проект>` / `// kjsgen:end <проект>` —
-  повторный экспорт заменяет только свой блок и не трогает ручной код вне маркеров.
-  Рецепты можно раскладывать по нескольким `.js`-файлам (поле «Файл экспорта»).
-- Запись строго внутри `kubejs/server_scripts/` текущего инстанса.
-- Доступ только в одиночной игре или операторам (уровень 2+).
-- Локализация: `en_us`, `ru_ru`.
+- **JEI-style editor** — 18×18 slot grid with vanilla arrow/flame decorations,
+  opened in-game with a keybind (**K** by default).
+- **Import from JEI** — pull any installed mod's recipe layout straight from its
+  JEI category (pixel-perfect slot positions), then fill in the KubeJS
+  template. Imported layouts live in `kjsgen/layouts/*.json` and load on
+  startup even without JEI.
+- **Live JEI rendering & layout editor** — for imported types, the canvas draws
+  the mod's real category panel and lets you drag its actual JEI slots to new
+  positions with the mouse.
+- **Full slot editing** — item / item tag / fluid / fluid tag, count, drop
+  chance, data components (SNBT), with search by id or name.
+- **Recipe settings** — id, group, comment, export file, "if mod loaded"
+  condition, plus per-type fields (cook time, XP, etc.).
+- **Real-time validation** and **live code preview** as you edit.
+- **Projects** — save/load editor sessions independently of export.
+- **Smart export** — marker blocks (`// kjsgen:start <project>` /
+  `// kjsgen:end <project>`) so re-exporting only replaces its own block,
+  never hand-written code. Recipes can be split across multiple `.js` files.
+- Writes only inside `kubejs/server_scripts/` of the current instance.
+- Access limited to singleplayer or server operators (permission level 2+).
 
-## Использование
+## Supported recipe types
 
-1. Установите **KubeJS** (нужен, чтобы экспортированные скрипты заработали;
-   сам редактор работает и без него).
-2. В игре нажмите **K** (настраивается в управлении) — откроется редактор.
-3. «+ Добавить рецепт» → выберите тип из сетки (есть поиск по названию/моду).
-4. Кликните по слоту: поиск/ручной ввод id, тег/жидкость, количество/шанс/компоненты.
-   ПКМ по слоту — очистить.
-5. Справа — параметры рецепта и живой предпросмотр кода.
-6. «Экспорт» → проверка, предпросмотр всех файлов, запись в `kubejs/server_scripts/`.
-7. `/reload` в игре — KubeJS подхватит новые рецепты.
+| Mod | Recipe types |
+|---|---|
+| Minecraft | Shaped Crafting, Shapeless Crafting, Smelting, Blasting, Smoking, Campfire Cooking, Stonecutting, Smithing (Transform/Trim), Potion Brewing¹ |
+| [Create](https://modrinth.com/mod/create) | Crushing, Milling, Mixing, Compacting, Pressing, Cutting, Deploying, Filling, Emptying, Splashing, Haunting, Sandpaper Polishing, Mechanical Crafting, Sequenced Assembly |
+| [Mekanism](https://modrinth.com/mod/mekanism) | Enriching, Crushing, Compressing, Combining, Purifying, Sawing, Smelting, Injecting, Oxidizing, Dissolution, Crystallizing, Chemical Infusing, Metallurgic Infusing, Energy Conversion |
 
-Рецепты варки зелий экспортируются под аддон [MoreJS](https://kubejs.com/wiki/addons/morejs)
+¹ Requires the [MoreJS](https://kubejs.com/wiki/addons/morejs) addon
 (`MoreJSEvents.registerPotionBrewing`).
+
+Create/Mekanism types are always available in the editor and export with an
+`if (Platform.isLoaded(...))` guard. Any other mod's recipes can be added via
+**Import from JEI**, or by an addon registering its own type (see below).
+
+## Usage
+
+1. Install **KubeJS** (needed for the exported scripts to run; the editor
+   itself works without it).
+2. Press **K** in-game (rebindable) to open the editor.
+3. **+ Add Recipe** → pick a type from the searchable grid.
+4. Click a slot to search/type an id, set a tag/fluid, count, chance, or data
+   components. Right-click a slot to clear it.
+5. Set recipe parameters on the side panel and watch the live code preview.
+6. **Export** → review the generated files, then write them to
+   `kubejs/server_scripts/`.
+7. `/reload` in-game to pick up the new recipes.
 
 ## Addon API
 
-Сторонний мод может добавить свои типы рецептов без правок kjsgen — двумя способами.
+A third-party mod can register its own recipe types without touching kjsgen,
+in one of two ways.
 
-### 1. Только JSON (без кода)
+### 1. JSON only (no code)
 
-Положите файл в `assets/<ваш_namespace>/kjsgen_layouts/<имя>.json`:
+Drop a file at `assets/<your_namespace>/kjsgen_layouts/<name>.json`:
 
 ```json
 {
@@ -95,13 +88,14 @@
 }
 ```
 
-Плейсхолдеры шаблона: `{slot:KEY}`, `{inputs}`, `{outputs}` (все заполненные входы/выходы через запятую),
-`{param:KEY}`, `{param_str:KEY}`, `{id}`, `{group}`. Суффикс `.id(...)`/`.group(...)` добавляется
-автоматически (отключается параметром `__suffix_id = "false"`).
+Template placeholders: `{slot:KEY}`, `{inputs}`, `{outputs}` (all filled
+inputs/outputs, comma-separated), `{param:KEY}`, `{param_str:KEY}`, `{id}`,
+`{group}`. The `.id(...)`/`.group(...)` suffix is added automatically (disable
+with `__suffix_id = "false"`).
 
-Типы декораций: `ARROW`, `FLAME`, `PLUS`, `TEXT` (+ поле `"text"`).
+Decoration types: `ARROW`, `FLAME`, `PLUS`, `TEXT` (+ a `"text"` field).
 
-### 2. Java (свой генератор кода)
+### 2. Java (custom codegen)
 
 ```java
 modEventBus.addListener((RegisterRecipeTypesEvent e) -> {
@@ -111,26 +105,15 @@ modEventBus.addListener((RegisterRecipeTypesEvent e) -> {
 });
 ```
 
-Событие `com.zizazr.kjsgen.api.RegisterRecipeTypesEvent` приходит на mod bus во время common setup.
-`RecipeCodegen.wrapperHeader()/wrapperFooter()` позволяют генерировать код в другом событии KubeJS
-(как встроенный brewing использует MoreJS).
+`com.zizazr.kjsgen.api.RegisterRecipeTypesEvent` fires on the mod bus during
+common setup. `RecipeCodegen.wrapperHeader()/wrapperFooter()` let you generate
+code under a different KubeJS event (as the built-in brewing type does for
+MoreJS).
 
-## Структура проекта
-
-```
-core/                 — модель данных (SlotContent, RecipeInstance, RecipeProject, реестр типов, валидатор)
-templates/            — встроенные типы + загрузчик JSON-раскладок (kjsgen_layouts)
-codegen/              — RecipeCodegen + генераторы KubeJS-кода по типам
-integration/kubejs/   — сборка скрипта и экспорт с маркерами
-integration/jei/      — импорт раскладок из JEI + кнопка «Изменить в kjsgen»
-ui/vanilla/           — экраны редактора на ванильных Screen (клавиша K)
-api/                  — событие регистрации для аддонов
-```
-
-## Сборка
+## Building
 
 ```bash
-./gradlew build   # jar в build/libs/
+./gradlew build   # jar in build/libs/
 ```
 
-Зависимости: NeoForge 21.1.x, Java 21.
+Dependencies: NeoForge 21.1.x, Java 21.
