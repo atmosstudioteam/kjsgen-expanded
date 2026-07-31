@@ -2,62 +2,121 @@ name: Build
 
 on:
   push:
-    tags:
-      - '*'
     branches:
       - '**'
+    tags:
+      - 'v*'
   pull_request:
 
 permissions:
   contents: write
 
 jobs:
+  # ── CI: build + run tests for every Stonecutter target on every push / PR ──
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: "⬇️ Checkout"
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Setup JDK 21
+      - name: "☕ Setup JDK 21"
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'gradle'
+          cache-dependency-path: |
+            versions/**/*.properties
+            *.properties
+            *.gradle.kts
 
-      - name: Setup Gradle
+      - name: "🛂 Setup Gradle"
         uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
 
-      # This is needed to be able to run ./gradlew below
-      # You can run `git update-index --chmod +x gradlew` then remove this step.
-      - name: Make Gradle wrapper executable
+      - name: "🔓 Make Gradle wrapper executable"
         run: chmod +x ./gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew build
+      # chiseledBuildAndCollect builds every chunk (1.20.1-forge, 1.21.1-neoforge, …),
+      # runs their unit tests, and gathers the jars into the root build/libs.
+      - name: "🏗️ Build & test all versions"
+        run: ./gradlew chiseledBuildAndCollect --stacktrace
 
-      - name: Upload build artifacts
+      - name: "🕵️ Collect jars"
         uses: actions/upload-artifact@v4
         with:
           name: jars
-          path: build/libs/*.jar
+          path: |
+            build/libs/*.jar
+            build/reports/**/*
 
-  release:
+  # ── Release: publish to Modrinth + CurseForge + GitHub on a v* tag ──
+  publish:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    env:
+      # v1.2.3        -> stable
+      # v1.2.3-beta.1 -> beta
+      # v1.2.3-alpha.1-> alpha
+      RELEASE_TYPE: >-
+        ${{ contains(github.ref_name, 'alpha') && 'alpha'
+        || contains(github.ref_name, 'beta') && 'beta'
+        || 'stable' }}
     steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: "⬇️ Checkout"
+        uses: actions/checkout@v4
         with:
-          name: jars
-          path: build/libs
+          fetch-depth: 0
+          fetch-tags: true
 
-      - name: Create GitHub Release
+      - name: "☕ Setup JDK 21"
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+          cache-dependency-path: |
+            versions/**/*.properties
+            *.properties
+            *.gradle.kts
+
+      - name: "🛂 Setup Gradle"
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
+
+      - name: "🔓 Make Gradle wrapper executable"
+        run: chmod +x ./gradlew
+
+      # Drive the published version from the tag: v1.2.3 -> mod.version=1.2.3.
+      - name: "🔎 Set version from tag"
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Publishing version ${VERSION} (${RELEASE_TYPE})"
+          sed -i "s/^mod.version=.*/mod.version=${VERSION}/" gradle.properties
+
+      # Stonecraft's built-in publisher (mod-publish-plugin). Root `publishMods`
+      # fans out to every Stonecutter node; file names, version, loader and
+      # game-version metadata are set by Stonecraft from each chunk.
+      - name: "🚀 Publish to Modrinth & CurseForge"
+        env:
+          DO_PUBLISH: 'true'
+          MODRINTH_ID: ${{ vars.MODRINTH_ID }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_ID: ${{ vars.CURSEFORGE_ID }}
+          CURSEFORGE_SLUG: ${{ vars.CURSEFORGE_SLUG }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: ./gradlew chiseledBuildAndCollect publishMods --stacktrace
+
+      - name: "📦 Create GitHub Release"
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
           generate_release_notes: true
+          prerelease: ${{ env.RELEASE_TYPE != 'stable' }}
           files: build/libs/*.jar
