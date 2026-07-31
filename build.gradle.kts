@@ -11,6 +11,29 @@ modSettings {
     }
 }
 
+// Modrinth + CurseForge publishing is Stonecraft's built-in mod-publish-plugin. The project ids,
+// tokens and release type come from env vars in CI (MODRINTH_ID/MODRINTH_TOKEN,
+// CURSEFORGE_ID/CURSEFORGE_SLUG/CURSEFORGE_TOKEN, RELEASE_TYPE, DO_PUBLISH); Stonecraft fills in the
+// file names, version, loader and supported MC versions per Stonecutter chunk. All we declare here are
+// the dependency relations shown on each platform's version page. Slugs verified to resolve on BOTH
+// Modrinth and CurseForge (the plugin looks them up via each platform's API and fails the publish on a
+// bad slug). KubeJS is mandatory — the whole mod exports KubeJS scripts; the recipe-type integrations
+// (Mekanism/Create/MoreJS) are optional.
+publishMods {
+    modrinth {
+        requires("kubejs")
+        optional("mekanism")
+        optional("create")
+        optional("morejs")
+    }
+    curseforge {
+        requires("kubejs")
+        optional("mekanism")
+        optional("create")
+        optional("morejs")
+    }
+}
+
 repositories {
     mavenCentral()                                 // JUnit, gson, other plain libs
     maven("https://maven.blamejared.com/")        // JEI
