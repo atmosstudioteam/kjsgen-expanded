@@ -1,0 +1,52 @@
+# NeoForge mod metadata. Placeholder tokens below are filled in by Stonecraft variable substitution.
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "All Rights Reserved"
+
+[[mods]]
+modId = "${id}"
+version = "${version}"
+displayName = "${name}"
+authors = "Zizazr"
+description = '''
+${description}
+'''
+
+[[dependencies.${id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "[${minecraftVersion},)"
+ordering = "NONE"
+side = "BOTH"
+
+# KubeJS - optional at runtime; only needed to actually load the exported scripts.
+[[dependencies.${id}]]
+modId = "kubejs"
+type = "optional"
+versionRange = "[2101,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# JEI - optional; used as a visual reference and for "edit in kjsgen".
+[[dependencies.${id}]]
+modId = "jei"
+type = "optional"
+versionRange = "[19,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Mekanism - optional; the bundled mekanism_* recipe types are hidden unless it is loaded.
+[[dependencies.${id}]]
+modId = "mekanism"
+type = "optional"
+versionRange = "[10.7,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# KubeJS Mekanism - optional; provides event.recipes.mekanism.* for the exported scripts.
+[[dependencies.${id}]]
+modId = "kubejs_mekanism"
+type = "optional"
+versionRange = "[2101.1.6,)"
+ordering = "AFTER"
+side = "BOTH"

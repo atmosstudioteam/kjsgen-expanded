@@ -38,3 +38,8 @@ run/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
+
+### Stonecutter / Stonecraft ###
+# Generated per-version build chunks (versions/<mcversion>-<loader>/) — keep versions/dependencies/.
+versions/*-*/**
+.stonecutter
