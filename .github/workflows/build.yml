@@ -105,7 +105,7 @@ jobs:
       # game-version metadata are set by Stonecraft from each chunk.
       - name: "🚀 Publish to Modrinth & CurseForge"
         env:
-          DO_PUBLISH: 'true'
+          DO_PUBLISH: 'false'
           MODRINTH_ID: ${{ vars.MODRINTH_ID }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_ID: ${{ vars.CURSEFORGE_ID }}
