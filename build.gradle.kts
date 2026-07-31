@@ -27,6 +27,8 @@ publishMods {
         optional("morejs")
     }
     curseforge {
+        clientRequired = true
+        serverRequired = true
         requires("kubejs")
         optional("mekanism")
         optional("create")
