@@ -11,7 +11,6 @@ import com.zizazr.kjsgen.core.RecipeProject;
 import com.zizazr.kjsgen.integration.kubejs.KubeJsExporter;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -231,11 +230,9 @@ public final class ServerProjectStore {
 
     // ------------------------------------------------------------------ lifecycle
 
-    /** NeoForge event-bus listener wired up from the {@code KjsGen} constructor. */
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer sp) {
-            unview(sp.getUUID(), sp.getServer());
-        }
+    /** Architectury {@code PlayerEvent.PLAYER_QUIT} listener, registered from common setup. */
+    public static void onLogout(ServerPlayer player) {
+        unview(player.getUUID(), player.getServer());
     }
 
     private static void unview(UUID player, MinecraftServer server) {

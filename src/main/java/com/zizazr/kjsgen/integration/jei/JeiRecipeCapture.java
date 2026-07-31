@@ -8,13 +8,15 @@ import com.zizazr.kjsgen.core.SlotRole;
 import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
+//? if neoforge
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
+//? if neoforge
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -114,12 +116,17 @@ public final class JeiRecipeCapture {
             String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
             return SlotContent.item(id, stack.getCount());
         }
+        // Fluid capture uses JEI's NeoForge fluid ingredient type. JEI Fabric exposes fluids through a
+        // different API, so on Fabric fluid slots are left empty for the user to fill in the editor
+        // (items still capture normally). See docs/adding-recipe-types.md for the Fabric follow-up.
+        //? if neoforge {
         Optional<FluidStack> fluid = view.getDisplayedIngredient(NeoForgeTypes.FLUID_STACK);
         if (fluid.isPresent() && !fluid.get().isEmpty()) {
             FluidStack stack = fluid.get();
             String id = BuiltInRegistries.FLUID.getKey(stack.getFluid()).toString();
             return SlotContent.fluid(id, stack.getAmount());
         }
+        //?}
         return SlotContent.EMPTY;
     }
 }

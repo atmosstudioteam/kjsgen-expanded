@@ -1,0 +1,7 @@
+accessWidener v2 named
+
+# The vanilla editor screens draw their stock widgets on top of custom-painted panels, so they
+# iterate Screen#renderables directly. That field is protected in vanilla and private under Fabric's
+# official mappings, so widen it to accessible. Stonecraft injects this widener on the Fabric chunk
+# and converts it to an access transformer for the NeoForge chunk (where it is a harmless no-op).
+accessible field net/minecraft/client/gui/screens/Screen renderables Ljava/util/List;

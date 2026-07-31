@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zizazr.kjsgen.KjsGen;
 import com.zizazr.kjsgen.core.ContentKind;
-import net.neoforged.fml.loading.FMLPaths;
+import dev.architectury.platform.Platform;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -84,7 +84,7 @@ final class SlotPicks {
     // ------------------------------------------------------------------ storage
 
     private static Path file() {
-        return FMLPaths.GAMEDIR.get().resolve("kjsgen").resolve("picks.json");
+        return Platform.getGameFolder().resolve("kjsgen").resolve("picks.json");
     }
 
     private static synchronized void ensureLoaded() {

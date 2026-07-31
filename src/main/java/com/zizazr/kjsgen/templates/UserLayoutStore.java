@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import com.zizazr.kjsgen.KjsGen;
 import com.zizazr.kjsgen.core.RecipeTypeDefinition;
 import com.zizazr.kjsgen.core.RecipeTypeRegistry;
-import net.neoforged.fml.loading.FMLPaths;
+import dev.architectury.platform.Platform;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +27,7 @@ public final class UserLayoutStore {
     }
 
     public static Path layoutsDir() {
-        return FMLPaths.GAMEDIR.get().resolve("kjsgen").resolve("layouts");
+        return Platform.getGameFolder().resolve("kjsgen").resolve("layouts");
     }
 
     /** Persists a definition so it is available in future sessions (idempotent overwrite). */

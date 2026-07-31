@@ -6,72 +6,81 @@ import com.zizazr.kjsgen.core.RecipeProject;
 import com.zizazr.kjsgen.integration.net.ClientEditSession;
 import com.zizazr.kjsgen.templates.JsonLayoutLoader;
 import com.zizazr.kjsgen.templates.UserLayoutStore;
-import com.zizazr.kjsgen.ui.vanilla.CollabCursors;
-import com.zizazr.kjsgen.ui.vanilla.CollabScreens;
 import com.zizazr.kjsgen.ui.vanilla.VanillaEditorScreen;
+import dev.architectury.event.events.client.ClientPlayerEvent;
+import dev.architectury.event.events.client.ClientTickEvent;
+import dev.architectury.registry.ReloadListenerRegistry;
+import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.event.ScreenEvent;
-import net.neoforged.neoforge.client.settings.KeyConflictContext;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.util.Lazy;
+import net.minecraft.server.packs.PackType;
 import org.lwjgl.glfw.GLFW;
 
 /**
  * Client entry: keybind + editor screen opening. The editor is a dev tool, so
  * it is gated to singleplayer / operators.
+ *
+ * <p>Loader-agnostic: on NeoForge this is the client {@code @Mod} class, on Fabric the
+ * {@code ClientModInitializer}. Both funnel into {@link #initClient()}, which registers the
+ * keybind, client tick, resource-reload listener and connect/disconnect hooks via Architectury.
  */
-@Mod(value = KjsGen.MODID, dist = Dist.CLIENT)
-@EventBusSubscriber(modid = KjsGen.MODID, value = Dist.CLIENT)
-public class KjsGenClient {
-    public static final Lazy<KeyMapping> OPEN_EDITOR = Lazy.of(() -> new KeyMapping(
+//? if neoforge {
+@net.neoforged.fml.common.Mod(value = KjsGen.MODID, dist = net.neoforged.api.distmarker.Dist.CLIENT)
+//?}
+public class KjsGenClient
+        //? if fabric
+        /*implements net.fabricmc.api.ClientModInitializer*/
+{
+    public static final KeyMapping OPEN_EDITOR = new KeyMapping(
             "key.kjsgen.open_editor",
-            KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_K,
             "key.categories.kjsgen"
-    ));
+    );
 
-    public KjsGenClient(ModContainer container) {
-        NeoForge.EVENT_BUS.addListener(KjsGenClient::onClientTick);
-        // Draw the other operators' cursors on top of everything (after the screen + its tooltips).
-        NeoForge.EVENT_BUS.addListener(KjsGenClient::onScreenRenderPost);
+    //? if neoforge {
+    public KjsGenClient(net.neoforged.fml.ModContainer container) {
+        initClient();
+    }
+    //?}
+
+    //? if fabric {
+    /*@Override
+    public void onInitializeClient() {
+        initClient();
+    }*/
+    //?}
+
+    /** Common client bootstrap, runs once on both loaders. */
+    private static void initClient() {
+        KeyMappingRegistry.register(OPEN_EDITOR);
+        ClientTickEvent.CLIENT_POST.register(KjsGenClient::onClientTick);
+        // Bundled + user JSON recipe layouts (JEI not required for the latter).
+        ReloadListenerRegistry.register(PackType.CLIENT_RESOURCES, new JsonLayoutLoader());
+        UserLayoutStore.loadAll();
         // A fresh connection starts in local mode until the server proves it has kjsgen.
-        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn e) -> ClientEditSession.reset());
-        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> ClientEditSession.reset());
+        ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> ClientEditSession.reset());
+        ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player -> ClientEditSession.reset());
+        //? if neoforge {
+        // Draw the other operators' cursors on top of everything (after the screen + its tooltips).
+        // Architectury has no cross-loader screen-render-post event, so the collab-cursor overlay is
+        // NeoForge-only for now; the Fabric equivalent (a mixin or fabric-api ScreenEvents) is a follow-up.
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(KjsGenClient::onScreenRenderPost);
+        //?}
     }
 
+    //? if neoforge {
     /** Top-most overlay: remote cursors float above the editor and any of its sub-dialogs. */
-    static void onScreenRenderPost(ScreenEvent.Render.Post event) {
-        if (CollabScreens.isEditorContext(event.getScreen())) {
-            CollabCursors.render(event.getGuiGraphics());
+    static void onScreenRenderPost(net.neoforged.neoforge.client.event.ScreenEvent.Render.Post event) {
+        if (com.zizazr.kjsgen.ui.vanilla.CollabScreens.isEditorContext(event.getScreen())) {
+            com.zizazr.kjsgen.ui.vanilla.CollabCursors.render(event.getGuiGraphics());
         }
     }
+    //?}
 
-    @SubscribeEvent
-    static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
-        event.register(OPEN_EDITOR.get());
-    }
-
-    @SubscribeEvent
-    static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener(new JsonLayoutLoader());
-        // layouts previously imported from JEI plugins (survive restarts, JEI not required)
-        UserLayoutStore.loadAll();
-    }
-
-    static void onClientTick(ClientTickEvent.Post event) {
-        while (OPEN_EDITOR.get().consumeClick()) {
+    static void onClientTick(Minecraft minecraft) {
+        while (OPEN_EDITOR.consumeClick()) {
             openEditor();
         }
         // Keep the other operators' presence tooltip up to date with which screen we're on.

@@ -6,40 +6,64 @@ import com.zizazr.kjsgen.codegen.CodegenRegistry;
 import com.zizazr.kjsgen.integration.net.KjsGenNet;
 import com.zizazr.kjsgen.integration.net.ServerProjectStore;
 import com.zizazr.kjsgen.templates.BuiltinRecipeTypes;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import com.zizazr.kjsgen.templates.JsonLayoutLoader;
+import dev.architectury.event.events.common.LifecycleEvent;
+import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.platform.Platform;
 import org.slf4j.Logger;
 
 /**
  * KubeJS Generator — a dev tool that provides a JEI-like visual recipe editor
  * and exports the created recipes as KubeJS scripts.
+ *
+ * <p>Loader-agnostic entry point: on NeoForge this is the {@code @Mod} class (constructed by FML),
+ * on Fabric it is the {@code ModInitializer}. Both funnel into {@link #init()}, which wires up the
+ * cross-loader events via the Architectury API.
  */
-@Mod(KjsGen.MODID)
-public class KjsGen {
+//? if neoforge {
+@net.neoforged.fml.common.Mod(KjsGen.MODID)
+//?}
+public class KjsGen
+        //? if fabric
+        /*implements net.fabricmc.api.ModInitializer*/
+{
     public static final String MODID = "kjsgen";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public KjsGen(IEventBus modEventBus, ModContainer modContainer) {
+    //? if neoforge {
+    public KjsGen(net.neoforged.bus.api.IEventBus modEventBus, net.neoforged.fml.ModContainer modContainer) {
+        init();
+    }
+    //?}
+
+    //? if fabric {
+    /*@Override
+    public void onInitialize() {
+        init();
+    }*/
+    //?}
+
+    /** Common bootstrap, runs once on both loaders. */
+    private static void init() {
         CodegenRegistry.registerBuiltins();
         BuiltinRecipeTypes.register();
-        modEventBus.addListener(this::commonSetup);
-        // Multiplayer sync: register the payload channels (mod bus) and server-side viewer cleanup.
-        modEventBus.addListener(KjsGenNet::register);
-        NeoForge.EVENT_BUS.addListener(ServerProjectStore::onLogout);
+        // Multiplayer sync: register the payload receivers (cross-loader; both sides).
+        KjsGenNet.register();
+        // Server-side viewer cleanup when a player disconnects.
+        PlayerEvent.PLAYER_QUIT.register(ServerProjectStore::onLogout);
+        // Register the bundled/addon recipe types during the common-setup phase (after every
+        // mod's initializer has run, so addon RegisterRecipeTypesEvent listeners are already in).
+        LifecycleEvent.SETUP.register(KjsGen::commonSetup);
     }
 
-    private void commonSetup(FMLCommonSetupEvent event) {
+    private static void commonSetup() {
         // Register the bundled JSON recipe types (Create/Mekanism layouts) on both physical sides.
         // The client also loads these via a resource-reload listener, but a dedicated server never
         // loads assets/, so without this the server registry would only hold the vanilla built-ins
         // and server-side export would silently drop every non-vanilla recipe.
-        com.zizazr.kjsgen.templates.JsonLayoutLoader.loadBundled();
+        JsonLayoutLoader.loadBundled();
         // Let addon mods contribute their own recipe types and codegen handlers.
-        net.neoforged.fml.ModLoader.postEvent(new RegisterRecipeTypesEvent());
+        RegisterRecipeTypesEvent.fire();
         if (!isKubeJsLoaded()) {
             LOGGER.warn("KubeJS is not installed. Recipes can still be created and saved, "
                     + "but the exported scripts will only take effect once KubeJS is added to the instance.");
@@ -47,10 +71,10 @@ public class KjsGen {
     }
 
     public static boolean isKubeJsLoaded() {
-        return ModList.get().isLoaded("kubejs");
+        return Platform.isModLoaded("kubejs");
     }
 
     public static boolean isJeiLoaded() {
-        return ModList.get().isLoaded("jei");
+        return Platform.isModLoaded("jei");
     }
 }

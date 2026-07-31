@@ -11,6 +11,7 @@ import com.zizazr.kjsgen.templates.UserLayoutStore;
 import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
+//? if neoforge
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
@@ -181,7 +182,14 @@ public final class JeiLayoutImporter {
             int y = area.getY() - (18 - area.getHeight()) / 2;
 
             boolean hasItems = slotView.getItemStacks().findAny().isPresent();
+            // JEI Fabric exposes fluids through a different API; on Fabric we treat slots as item-only
+            // when importing a category layout (the editor still lets the user enable fluids per slot).
+            //? if neoforge {
             boolean hasFluids = slotView.getIngredients(NeoForgeTypes.FLUID_STACK).findAny().isPresent();
+            //?}
+            //? if fabric {
+            /*boolean hasFluids = false;*/
+            //?}
             if (!hasItems && !hasFluids) {
                 hasItems = true; // empty sample slot: assume items
             }

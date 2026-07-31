@@ -1,8 +1,8 @@
 package com.zizazr.kjsgen.integration.mekanism;
 
+import dev.architectury.platform.Platform;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
-import net.neoforged.fml.ModList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ public final class MekanismChemicals {
 
     public static boolean available() {
         if (available == null) {
-            boolean ok = ModList.get().isLoaded("mekanism");
+            boolean ok = Platform.isModLoaded("mekanism");
             if (ok) {
                 try {
                     Class.forName("mekanism.api.MekanismAPI");
@@ -50,26 +50,51 @@ public final class MekanismChemicals {
         return available;
     }
 
+    // Mekanism has no Fabric 1.21.1 build, so its API jar is not on the Fabric compile classpath.
+    // Every method that touches {@link Impl} (the only Mekanism-typed code) is compiled out on Fabric
+    // and returns empty there; on Fabric {@link #available()} is false anyway, so behaviour is identical.
+
     /** Chemicals matching {@code query} (id or lower-cased display name), up to {@code cap}. */
     public static List<ChemicalInfo> search(String query, int cap) {
+        //? if neoforge {
         return available() ? Impl.search(query, cap) : List.of();
+        //?}
+        //? if fabric {
+        /*return List.of();*/
+        //?}
     }
 
     /** Chemical tags matching {@code query}; icon/tint come from the first tag member. */
     public static List<ChemicalInfo> searchTags(String query, int cap) {
+        //? if neoforge {
         return available() ? Impl.searchTags(query, cap) : List.of();
+        //?}
+        //? if fabric {
+        /*return List.of();*/
+        //?}
     }
 
     public static Optional<ChemicalInfo> byId(String id) {
+        //? if neoforge {
         return available() ? Impl.byId(id) : Optional.empty();
+        //?}
+        //? if fabric {
+        /*return Optional.empty();*/
+        //?}
     }
 
     /** First chemical of a tag, for rendering tag contents. */
     public static Optional<ChemicalInfo> tagSample(String tagId) {
+        //? if neoforge {
         return available() ? Impl.tagSample(tagId) : Optional.empty();
+        //?}
+        //? if fabric {
+        /*return Optional.empty();*/
+        //?}
     }
 
     /** The only class that touches Mekanism types; never loaded when Mekanism is absent. */
+    //? if neoforge {
     private static final class Impl {
         static List<ChemicalInfo> search(String query, int cap) {
             List<ChemicalInfo> out = new ArrayList<>();
@@ -143,4 +168,5 @@ public final class MekanismChemicals {
                     chemical.getIcon(), chemical.getTint());
         }
     }
+    //?}
 }

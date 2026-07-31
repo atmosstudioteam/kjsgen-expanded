@@ -4,7 +4,7 @@ import com.zizazr.kjsgen.KjsGen;
 import com.zizazr.kjsgen.core.ProjectManager;
 import com.zizazr.kjsgen.core.RecipeInstance;
 import com.zizazr.kjsgen.core.RecipeProject;
-import net.neoforged.fml.loading.FMLPaths;
+import dev.architectury.platform.Platform;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +37,7 @@ public final class KubeJsExporter {
     }
 
     public static Path serverScriptsDir() {
-        return FMLPaths.GAMEDIR.get().resolve("kubejs").resolve("server_scripts");
+        return Platform.getGameFolder().resolve("kubejs").resolve("server_scripts");
     }
 
     /** File-name-safe script name without extension. */

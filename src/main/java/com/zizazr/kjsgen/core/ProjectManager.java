@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zizazr.kjsgen.KjsGen;
-import net.neoforged.fml.loading.FMLPaths;
+import dev.architectury.platform.Platform;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,7 +30,7 @@ public final class ProjectManager {
     }
 
     public static Path projectsDir() {
-        return FMLPaths.GAMEDIR.get().resolve("kjsgen").resolve("projects");
+        return Platform.getGameFolder().resolve("kjsgen").resolve("projects");
     }
 
     /** The project currently being edited; lazily creates a default one. */

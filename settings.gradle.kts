@@ -25,9 +25,10 @@ stonecutter {
             for (it in loaders) version("$version-$it", version)
         }
 
-        // Target matrix is being brought up incrementally (NeoForge 1.21.1 first).
-        // Fabric 1.21.1 and the 1.20.1 / 1.19.2 (forge/fabric) targets are added
-        // in later phases once the loader abstraction is in place:
+        // Target matrix, brought up incrementally. 1.21.1 is NeoForge-only: KubeJS (the mod's whole
+        // reason to exist) has no Fabric build for 1.21.1, so a 1.21.1-fabric target is pointless.
+        // The cross-loader abstraction stays in the code for the older Fabric targets, where KubeJS
+        // does exist, added in later phases:
         //   mc("1.19.2", "forge", "fabric")
         //   mc("1.20.1", "forge", "fabric")
         mc("1.21.1", "neoforge")

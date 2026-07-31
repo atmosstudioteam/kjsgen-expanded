@@ -1,22 +1,21 @@
 package com.zizazr.kjsgen.integration.net;
 
+import dev.architectury.networking.NetworkManager;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
- * Registers the two kjsgen payload channels and dispatches incoming payloads by op string.
+ * Registers the two kjsgen payload channels and dispatches incoming payloads by op string,
+ * cross-loader via Architectury's {@link NetworkManager}.
  *
- * <p>The channel is registered {@code optional()} so a server or client that lacks kjsgen
- * simply drops the payloads instead of refusing the connection — that is what lets a
- * kjsgen client fall back to local-file mode against a vanilla/other-modded server.
+ * <p>Architectury has no explicit "optional channel" concept: if the other side has no receiver
+ * registered for a payload type, the packet is silently dropped and the connection is not refused.
+ * That is exactly the behaviour kjsgen relies on to fall back to local-file mode against a
+ * vanilla/other-modded server — so no extra opt-in flag is needed here.
  *
- * <p>Handlers run on the network thread by default, so every game-state mutation is wrapped
- * in {@link IPayloadContext#enqueueWork}. The client-bound handler is an explicit lambda (not
+ * <p>Receivers run on the network thread, so every game-state mutation is wrapped in
+ * {@link NetworkManager.PacketContext#queue}. The client-bound handler is an explicit lambda (not
  * a method reference) referencing {@code ClientEditSession} only inside its body, so that
- * {@code Dist.CLIENT} class is never loaded on a dedicated server during registration.
+ * client-only class is never loaded on a dedicated server during registration.
  */
 public final class KjsGenNet {
     // ---- op names (shared by both directions where it makes sense) ----
@@ -43,17 +42,16 @@ public final class KjsGenNet {
     private KjsGenNet() {
     }
 
-    /** Mod-bus listener wired up from the {@code KjsGen} constructor. */
-    public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1").optional();
-        registrar.playToServer(KjsGenC2SPayload.TYPE, KjsGenC2SPayload.CODEC,
+    /** Registers both receivers on both sides. Called once from common setup. */
+    public static void register() {
+        NetworkManager.registerReceiver(NetworkManager.Side.C2S, KjsGenC2SPayload.TYPE, KjsGenC2SPayload.CODEC,
                 (payload, ctx) -> {
-                    if (ctx.player() instanceof ServerPlayer sender) {
-                        ctx.enqueueWork(() -> ServerProjectStore.handle(sender, payload.op(), payload.json()));
+                    if (ctx.getPlayer() instanceof ServerPlayer sender) {
+                        ctx.queue(() -> ServerProjectStore.handle(sender, payload.op(), payload.json()));
                     }
                 });
-        registrar.playToClient(KjsGenS2CPayload.TYPE, KjsGenS2CPayload.CODEC,
-                (payload, ctx) -> ctx.enqueueWork(
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, KjsGenS2CPayload.TYPE, KjsGenS2CPayload.CODEC,
+                (payload, ctx) -> ctx.queue(
                         () -> ClientEditSession.handleServer(payload.op(), payload.json())));
     }
 
@@ -61,11 +59,11 @@ public final class KjsGenNet {
 
     /** Client -> server. Call from client code only. */
     public static void toServer(String op, String json) {
-        PacketDistributor.sendToServer(new KjsGenC2SPayload(op, json));
+        NetworkManager.sendToServer(new KjsGenC2SPayload(op, json));
     }
 
     /** Server -> one client. */
     public static void toPlayer(ServerPlayer player, String op, String json) {
-        PacketDistributor.sendToPlayer(player, new KjsGenS2CPayload(op, json));
+        NetworkManager.sendToPlayer(player, new KjsGenS2CPayload(op, json));
     }
 }

@@ -87,7 +87,7 @@ public record RecipeTypeDefinition(
         if (requiresMod.isEmpty() || requiresMod.equals("minecraft") || requiresMod.equals("morejs")) {
             return true;
         }
-        return net.neoforged.fml.ModList.get().isLoaded(requiresMod);
+        return dev.architectury.platform.Platform.isModLoaded(requiresMod);
     }
 
     public JsonObject toJson() {

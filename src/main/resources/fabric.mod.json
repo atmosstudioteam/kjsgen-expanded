@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "${description}",
+  "authors": [
+    "Zizazr"
+  ],
+  "license": "All Rights Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.zizazr.kjsgen.KjsGen"
+    ],
+    "client": [
+      "com.zizazr.kjsgen.KjsGenClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": ">=1.21.1",
+    "java": ">=21",
+    "fabric-api": "*",
+    "architectury": "*"
+  },
+  "suggests": {
+    "jei": "*",
+    "kubejs": "*"
+  }
+}

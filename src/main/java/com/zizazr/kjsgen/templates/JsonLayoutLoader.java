@@ -9,8 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforgespi.language.IModFileInfo;
+import dev.architectury.platform.Platform;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -40,11 +40,13 @@ public final class JsonLayoutLoader extends SimplePreparableReloadListener<Map<R
      * so both physical sides have the same types.
      */
     public static void loadBundled() {
-        IModFileInfo info = ModList.get().getModFileById(KjsGen.MODID);
-        if (info == null) {
+        // Architectury resolves the resource inside our own mod jar on both loaders. Our mod is
+        // always present, so getMod never throws here; findResource is empty if the folder is absent.
+        Optional<Path> resource = Platform.getMod(KjsGen.MODID).findResource("assets", KjsGen.MODID, FOLDER);
+        if (resource.isEmpty()) {
             return;
         }
-        Path dir = info.getFile().findResource("assets", KjsGen.MODID, FOLDER);
+        Path dir = resource.get();
         if (!Files.isDirectory(dir)) {
             return;
         }

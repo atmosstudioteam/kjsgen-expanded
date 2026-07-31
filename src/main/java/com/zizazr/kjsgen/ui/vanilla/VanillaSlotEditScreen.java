@@ -721,7 +721,14 @@ public final class VanillaSlotEditScreen extends VanillaDialogScreen {
         ResourceLocation rl = ResourceLocation.tryParse(id);
         if (rl != null && BuiltInRegistries.FLUID.containsKey(rl)) {
             Fluid fluid = BuiltInRegistries.FLUID.get(rl);
+            // Fluid display name: NeoForge hangs it off FluidType; Fabric uses the Transfer API.
+            //? if neoforge {
             return fluid.getFluidType().getDescription().getString();
+            //?}
+            //? if fabric {
+            /*return net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes.getName(
+                    net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.of(fluid)).getString();*/
+            //?}
         }
         return id;
     }
