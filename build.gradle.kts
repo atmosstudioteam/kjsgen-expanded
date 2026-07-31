@@ -53,10 +53,15 @@ dependencies {
 
         // KubeJS: dev-runtime only, so runClient can actually load the exported scripts.
         modLocalRuntime("dev.latvian.mods:kubejs-neoforge:${property("kubejs_version")}")
-        // KubeJS declares these with runtime scope, which Loom does not pull transitively — without
-        // them KubeJSClient crashes at startup (missing tiny-java-server / animated-gif-lib classes).
-        modLocalRuntime("dev.latvian.apps:tiny-java-server:${property("tiny_java_server_version")}")
-        modLocalRuntime("com.github.rtyley:animated-gif-lib-for-java:${property("animated_gif_lib_version")}")
+        // KubeJS needs these non-mod libraries at runtime, but FML does not discover non-mod jars on
+        // its own (NeoForge <= 1.21.8), and Loom drops the runtime-scope transitives of a mod dependency.
+        // The Architectury Loom config for "a runtime library FML must be told about" is
+        // forgeRuntimeLibrary (shared by Forge and NeoForge) — plain runtimeOnly/localRuntime does NOT
+        // reach the dev runtime classpath here. Without this KubeJSClient crashes with
+        // NoClassDefFoundError: dev.latvian.apps.tinyserver...
+        forgeRuntimeLibrary("dev.latvian.apps:tiny-java-server:${property("tiny_java_server_version")}")
+        forgeRuntimeLibrary("com.github.rtyley:animated-gif-lib-for-java:${property("animated_gif_lib_version")}")
+        // better-advanced-tooltips is an actual mod, so it stays on modLocalRuntime.
         modLocalRuntime("dev.latvian.mods:better-advanced-tooltips:${property("better_advanced_tooltips_version")}")
 
         // Mekanism: API at compile time (chemical registry / gas slots), full jar dev-runtime only.
