@@ -1,5 +1,8 @@
 package com.zizazr.kjsgen.integration.net;
 
+// The payload/StreamCodec networking API is 1.20.5+; on 1.20.1 KjsGenNet uses the FriendlyByteBuf-
+// based Architectury API directly and this class is compiled out to a bare package declaration.
+//? if >=1.21 {
 import com.zizazr.kjsgen.KjsGen;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -28,3 +31,4 @@ public record KjsGenS2CPayload(String op, String json) implements CustomPacketPa
         return TYPE;
     }
 }
+//?}

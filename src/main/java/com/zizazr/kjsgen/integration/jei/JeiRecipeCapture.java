@@ -1,5 +1,7 @@
 package com.zizazr.kjsgen.integration.jei;
 
+// JEI 19 only (bundled with 1.21.x); compiled out on 1.20.1-forge's JEI 15. See KjsgenJeiPlugin.
+//? if >=1.21 {
 import com.zizazr.kjsgen.core.RecipeInstance;
 import com.zizazr.kjsgen.core.RecipeTypeDefinition;
 import com.zizazr.kjsgen.core.SlotContent;
@@ -130,3 +132,4 @@ public final class JeiRecipeCapture {
         return SlotContent.EMPTY;
     }
 }
+//?}

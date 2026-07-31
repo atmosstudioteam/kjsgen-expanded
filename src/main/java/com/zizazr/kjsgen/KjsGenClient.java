@@ -52,8 +52,8 @@ public class KjsGenClient
     }*/
     //?}
 
-    /** Common client bootstrap, runs once on both loaders. */
-    private static void initClient() {
+    /** Common client bootstrap, runs once on every loader. */
+    static void initClient() {
         KeyMappingRegistry.register(OPEN_EDITOR);
         ClientTickEvent.CLIENT_POST.register(KjsGenClient::onClientTick);
         // Bundled + user JSON recipe layouts (JEI not required for the latter).
@@ -62,11 +62,14 @@ public class KjsGenClient
         // A fresh connection starts in local mode until the server proves it has kjsgen.
         ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(player -> ClientEditSession.reset());
         ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(player -> ClientEditSession.reset());
-        //? if neoforge {
         // Draw the other operators' cursors on top of everything (after the screen + its tooltips).
         // Architectury has no cross-loader screen-render-post event, so the collab-cursor overlay is
-        // NeoForge-only for now; the Fabric equivalent (a mixin or fabric-api ScreenEvents) is a follow-up.
+        // Forge-family-only for now; the Fabric equivalent (a mixin or fabric-api ScreenEvents) is a follow-up.
+        //? if neoforge {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(KjsGenClient::onScreenRenderPost);
+        //?}
+        //? if forge {
+        /*net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(KjsGenClient::onScreenRenderPost);*/
         //?}
     }
 
@@ -77,6 +80,15 @@ public class KjsGenClient
             com.zizazr.kjsgen.ui.vanilla.CollabCursors.render(event.getGuiGraphics());
         }
     }
+    //?}
+
+    //? if forge {
+    /*// Top-most overlay: remote cursors float above the editor and any of its sub-dialogs.
+    static void onScreenRenderPost(net.minecraftforge.client.event.ScreenEvent.Render.Post event) {
+        if (com.zizazr.kjsgen.ui.vanilla.CollabScreens.isEditorContext(event.getScreen())) {
+            com.zizazr.kjsgen.ui.vanilla.CollabCursors.render(event.getGuiGraphics());
+        }
+    }*/
     //?}
 
     static void onClientTick(Minecraft minecraft) {

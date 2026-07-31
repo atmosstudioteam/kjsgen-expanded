@@ -1,0 +1,48 @@
+# Forge (1.20.1) mod metadata. NeoForge reads neoforge.mods.toml and Fabric reads fabric.mod.json;
+# each loader ignores the descriptors it doesn't own, so all three live side by side in shared
+# resources. Placeholder tokens are filled in by Stonecraft variable substitution.
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "All Rights Reserved"
+
+[[mods]]
+modId = "${id}"
+version = "${version}"
+displayName = "${name}"
+authors = "Zizazr"
+description = '''
+${description}
+'''
+
+# Forge 1.20.1 dependency entries use `mandatory = true/false` — NOT NeoForge 1.21.1's
+# `type = "required"/"optional"`. Getting this wrong throws InvalidModFileException at mod discovery.
+[[dependencies.${id}]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${id}]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[${minecraftVersion},)"
+ordering = "NONE"
+side = "BOTH"
+
+# KubeJS - optional at runtime; only needed to actually load the exported scripts. 1.20.1 uses
+# KubeJS 6 (2001.x), so the version floor differs from the 1.21.1/NeoForge descriptor.
+[[dependencies.${id}]]
+modId = "kubejs"
+mandatory = false
+versionRange = "[2001,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# JEI - optional; used as a visual reference and for "edit in kjsgen". 1.20.1 ships JEI 15.
+[[dependencies.${id}]]
+modId = "jei"
+mandatory = false
+versionRange = "[15,)"
+ordering = "AFTER"
+side = "BOTH"

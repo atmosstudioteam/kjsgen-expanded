@@ -663,8 +663,14 @@ public final class VanillaSlotEditScreen extends VanillaDialogScreen {
     }
 
     @Override
+    //? if >=1.21 {
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) {
+    //?}
+    //? if <1.21 {
+    /*public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
+        if (super.mouseScrolled(mouseX, mouseY, scrollY)) {
+    *///?}
             return true;
         }
         if (inRect(mouseX, mouseY, resultsX, resultsY, resultsW, resultsH)) {
@@ -721,8 +727,8 @@ public final class VanillaSlotEditScreen extends VanillaDialogScreen {
         ResourceLocation rl = ResourceLocation.tryParse(id);
         if (rl != null && BuiltInRegistries.FLUID.containsKey(rl)) {
             Fluid fluid = BuiltInRegistries.FLUID.get(rl);
-            // Fluid display name: NeoForge hangs it off FluidType; Fabric uses the Transfer API.
-            //? if neoforge {
+            // Fluid display name: Forge/NeoForge both hang it off FluidType; Fabric uses the Transfer API.
+            //? if neoforge || forge {
             return fluid.getFluidType().getDescription().getString();
             //?}
             //? if fabric {

@@ -30,7 +30,11 @@ stonecutter {
         // The cross-loader abstraction stays in the code for the older Fabric targets, where KubeJS
         // does exist, added in later phases:
         //   mc("1.19.2", "forge", "fabric")
-        //   mc("1.20.1", "forge", "fabric")
+        //   mc("1.20.1", "forge", "fabric")   // fabric side deferred
+        // 1.20.1 targets Forge (not NeoForge): KubeJS/JEI only ship Forge builds for 1.20.1 —
+        // KubeJS's NeoForge support starts at 1.20.4 — so Forge is the KubeJS-native loader here,
+        // same criterion that made 1.21.1 NeoForge-only.
+        mc("1.20.1", "forge")
         mc("1.21.1", "neoforge")
 
         vcsVersion = "1.21.1-neoforge"

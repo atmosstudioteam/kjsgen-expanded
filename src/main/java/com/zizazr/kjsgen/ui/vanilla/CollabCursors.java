@@ -50,7 +50,7 @@ public final class CollabCursors {
 
     private static CursorSprite sprite(String name, int hotX, int hotY) {
         return new CursorSprite(
-                ResourceLocation.fromNamespaceAndPath(KjsGen.MODID, "textures/cursor/" + name + ".png"),
+                KjsGen.rl("textures/cursor/" + name + ".png"),
                 hotX, hotY);
     }
 

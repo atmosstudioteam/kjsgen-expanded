@@ -50,16 +50,18 @@ public final class MekanismChemicals {
         return available;
     }
 
-    // Mekanism has no Fabric 1.21.1 build, so its API jar is not on the Fabric compile classpath.
-    // Every method that touches {@link Impl} (the only Mekanism-typed code) is compiled out on Fabric
-    // and returns empty there; on Fabric {@link #available()} is false anyway, so behaviour is identical.
+    // The Impl block below is compiled only on NeoForge (1.21.1), where the unified Mekanism 10.7
+    // chemical registry (mekanism:chemical) exists. It is compiled out on Fabric (no Mekanism build)
+    // AND on Forge 1.20.1: Mekanism 10.4 there predates the unified registry (separate gas/infuse/
+    // pigment/slurry registries), so a real 1.20.1 port is a follow-up. On both, every method returns
+    // empty and available() is false, so behaviour is identical to "Mekanism absent".
 
     /** Chemicals matching {@code query} (id or lower-cased display name), up to {@code cap}. */
     public static List<ChemicalInfo> search(String query, int cap) {
         //? if neoforge {
         return available() ? Impl.search(query, cap) : List.of();
         //?}
-        //? if fabric {
+        //? if fabric || forge {
         /*return List.of();*/
         //?}
     }
@@ -69,7 +71,7 @@ public final class MekanismChemicals {
         //? if neoforge {
         return available() ? Impl.searchTags(query, cap) : List.of();
         //?}
-        //? if fabric {
+        //? if fabric || forge {
         /*return List.of();*/
         //?}
     }
@@ -78,7 +80,7 @@ public final class MekanismChemicals {
         //? if neoforge {
         return available() ? Impl.byId(id) : Optional.empty();
         //?}
-        //? if fabric {
+        //? if fabric || forge {
         /*return Optional.empty();*/
         //?}
     }
@@ -88,7 +90,7 @@ public final class MekanismChemicals {
         //? if neoforge {
         return available() ? Impl.tagSample(tagId) : Optional.empty();
         //?}
-        //? if fabric {
+        //? if fabric || forge {
         /*return Optional.empty();*/
         //?}
     }

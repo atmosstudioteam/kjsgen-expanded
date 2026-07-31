@@ -89,8 +89,14 @@ public final class VanillaCodePreviewScreen extends VanillaDialogScreen {
     }
 
     @Override
+    //? if >=1.21 {
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) {
+    //?}
+    //? if <1.21 {
+    /*public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
+        if (super.mouseScrolled(mouseX, mouseY, scrollY)) {
+    *///?}
             return true;
         }
         int lineH = (int) (9 * 0.85f);

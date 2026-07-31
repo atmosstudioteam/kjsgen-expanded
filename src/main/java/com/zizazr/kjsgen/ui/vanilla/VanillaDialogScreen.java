@@ -33,7 +33,12 @@ abstract class VanillaDialogScreen extends Screen {
         // parent editor here: Minecraft batches text and item rendering and flushes
         // it at the end of the frame, so anything the parent draws would end up
         // painted on top of this dialog.
+        //? if >=1.21 {
         this.renderBackground(g, mouseX, mouseY, partialTick);
+        //?}
+        //? if <1.21 {
+        /*this.renderBackground(g);*/
+        //?}
 
         VanillaTheme.panel(g, dialogX, dialogY, dialogW, dialogH);
         g.drawString(this.font, this.title, dialogX + 8, dialogY + 8, VanillaTheme.TEXT, true);

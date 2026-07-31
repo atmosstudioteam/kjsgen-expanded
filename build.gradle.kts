@@ -32,6 +32,9 @@ dependencies {
     if (mod.isFabric) {
         modImplementation("dev.architectury:architectury-fabric:${property("architectury_version")}")
     }
+    if (mod.isForge) {
+        modImplementation("dev.architectury:architectury-forge:${property("architectury_version")}")
+    }
 
     if (mod.isFabric) {
         // Fabric API — required at runtime; Architectury builds its Fabric implementation on top of it.
@@ -44,6 +47,23 @@ dependencies {
         // KubeJS, Mekanism and Create have no usable Fabric 1.21.1 build, which is why 1.21.1 ships
         // NeoForge-only. This block stays for the older Fabric targets (1.20.1 / 1.19.2), where those
         // mods do exist, so their dev-runtime dependencies get added here per version.
+    }
+
+    if (mod.isForge) {
+        // 1.20.1-forge (Milestone A): core editor + KubeJS export. JEI is branched for JEI 15;
+        // Mekanism (10.4 API) and Create dev-runtime are Milestone B follow-ups.
+        // JEI: the forge jar carries the api classes, so compile against it directly; full jar in runtime.
+        modCompileOnly("mezz.jei:jei-$mc-forge:${property("jei_version")}")
+        modLocalRuntime("mezz.jei:jei-$mc-forge:${property("jei_version")}")
+
+        // KubeJS 6 + its Rhino script engine (both Forge mods), dev-runtime only so runClient can
+        // load exported scripts. KubeJS 6 has no tiny-java-server dep, so no forgeRuntimeLibrary here.
+        modLocalRuntime("dev.latvian.mods:kubejs-forge:${property("kubejs_version")}")
+        modLocalRuntime("dev.latvian.mods:rhino-forge:${property("rhino_version")}")
+        // MixinExtras common classes (MixinExtrasBootstrap) must be on the classpath for the early
+        // mixin bootstrap; Loom drops this non-mod transitive of KubeJS, so add it via the same
+        // forgeRuntimeLibrary config that fixed KubeJS's runtime libs on 1.21.1-neoforge.
+        forgeRuntimeLibrary("io.github.llamalad7:mixinextras-common:${property("mixinextras_version")}")
     }
 
     if (mod.isNeoforge) {
@@ -88,4 +108,13 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+}
+
+// Stonecraft's generatePackMCMetaJson writes into a generated resources dir the test source set also
+// reads. Gradle 9's strict validation fails compileTestJava for that undeclared implicit dependency the
+// first time the task actually executes (it's masked on chunks whose test output is already UP-TO-DATE).
+// Declaring the dependency is the fix Gradle itself recommends. Uses matching{} so it's a no-op on any
+// chunk where the metadata task is absent.
+tasks.matching { it.name == "compileTestJava" }.configureEach {
+    dependsOn(tasks.matching { it.name == "generatePackMCMetaJson" })
 }

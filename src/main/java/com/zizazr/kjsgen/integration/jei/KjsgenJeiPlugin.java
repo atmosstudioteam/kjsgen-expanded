@@ -1,5 +1,9 @@
 package com.zizazr.kjsgen.integration.jei;
 
+// The whole JEI integration targets JEI 19 (bundled with 1.21.x). On 1.20.1-forge JEI is v15, whose
+// recipe-button API (IAdvancedRegistration#addRecipeButtonFactory, gui.buttons.*, recipe.advanced.*)
+// does not exist, so the entire package is compiled out there and re-added for JEI 15 in a follow-up.
+//? if >=1.21 {
 import com.zizazr.kjsgen.KjsGen;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -24,7 +28,7 @@ public class KjsgenJeiPlugin implements IModPlugin {
 
     @Override
     public ResourceLocation getPluginUid() {
-        return ResourceLocation.fromNamespaceAndPath(KjsGen.MODID, "jei_plugin");
+        return KjsGen.rl("jei_plugin");
     }
 
     @Override
@@ -47,3 +51,4 @@ public class KjsgenJeiPlugin implements IModPlugin {
         return runtime;
     }
 }
+//?}

@@ -75,7 +75,13 @@ final class CollabHeads {
         ClientPacketListener conn = Minecraft.getInstance().getConnection();
         PlayerInfo info = conn != null ? conn.getPlayerInfo(uuid) : null;
         if (info != null) {
+            // 1.21 resolves a PlayerSkin; 1.20.1 exposes the skin as a ResourceLocation.
+            //? if >=1.21 {
             PlayerFaceRenderer.draw(g, info.getSkin(), fx, fy, FACE);
+            //?}
+            //? if <1.21 {
+            /*PlayerFaceRenderer.draw(g, info.getSkinLocation(), fx, fy, FACE);*/
+            //?}
         } else {
             g.fill(fx, fy, fx + FACE, fy + FACE, color);
         }

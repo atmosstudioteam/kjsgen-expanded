@@ -1,5 +1,7 @@
 package com.zizazr.kjsgen.integration.jei;
 
+// JEI 19 only (bundled with 1.21.x); compiled out on 1.20.1-forge's JEI 15. See KjsgenJeiPlugin.
+//? if >=1.21 {
 import com.zizazr.kjsgen.KjsGen;
 import mezz.jei.api.gui.drawable.IDrawable;
 import net.minecraft.client.gui.GuiGraphics;
@@ -17,8 +19,7 @@ final class KjsEditIcon implements IDrawable {
     private static final int SIZE = 11;
     /** Source texture pixel dimensions. */
     private static final int TEX = 16;
-    private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(KjsGen.MODID, "textures/gui/jei_edit.png");
+    private static final ResourceLocation TEXTURE = KjsGen.rl("textures/gui/jei_edit.png");
 
     @Override
     public int getWidth() {
@@ -36,3 +37,4 @@ final class KjsEditIcon implements IDrawable {
         guiGraphics.blit(TEXTURE, xOffset, yOffset, SIZE, SIZE, 0f, 0f, TEX, TEX, TEX, TEX);
     }
 }
+//?}
