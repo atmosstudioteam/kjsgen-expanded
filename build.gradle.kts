@@ -27,8 +27,8 @@ publishMods {
         optional("morejs")
     }
     curseforge {
-        clientRequired = true
-        serverRequired = true
+        client = true
+        server = true
         requires("kubejs")
         optional("mekanism")
         optional("create")
@@ -65,13 +65,21 @@ dependencies {
         // Fabric API — required at runtime; Architectury builds its Fabric implementation on top of it.
         modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_version")}")
 
-        // JEI (same version string as neoforge): API on the compile classpath, full jar in dev runtime.
+        // JEI (same version string across loaders): API on the compile classpath, full jar in dev
+        // runtime. On 1.20.1 this is JEI 15, whose recipe-button API doesn't exist, so integration/jei
+        // is compiled out (//? if >=1.21) exactly as on 1.20.1-forge; JEI is still loaded so the dev
+        // client can browse recipes visually.
         modCompileOnly("mezz.jei:jei-$mc-fabric-api:${property("jei_version")}")
         modLocalRuntime("mezz.jei:jei-$mc-fabric:${property("jei_version")}")
 
-        // KubeJS, Mekanism and Create have no usable Fabric 1.21.1 build, which is why 1.21.1 ships
-        // NeoForge-only. This block stays for the older Fabric targets (1.20.1 / 1.19.2), where those
-        // mods do exist, so their dev-runtime dependencies get added here per version.
+        // 1.20.1 is the first Fabric target where KubeJS exists (KubeJS 6 / 2001.x ships a Fabric
+        // build; 1.21.1 does not, which is why it's NeoForge-only). Dev-runtime only, so runClient can
+        // load exported scripts. KubeJS-fabric JiJ's its MixinExtras, so unlike the forge/neoforge
+        // chunks no forgeRuntimeLibrary juggling is needed here.
+        if (mc == "1.20.1") {
+            modLocalRuntime("dev.latvian.mods:kubejs-fabric:${property("kubejs_version")}")
+            modLocalRuntime("dev.latvian.mods:rhino-fabric:${property("rhino_version")}")
+        }
     }
 
     if (mod.isForge) {
@@ -88,7 +96,11 @@ dependencies {
         // MixinExtras common classes (MixinExtrasBootstrap) must be on the classpath for the early
         // mixin bootstrap; Loom drops this non-mod transitive of KubeJS, so add it via the same
         // forgeRuntimeLibrary config that fixed KubeJS's runtime libs on 1.21.1-neoforge.
-        forgeRuntimeLibrary("io.github.llamalad7:mixinextras-common:${property("mixinextras_version")}")
+        // String-invoke form: resolves the config by name at runtime. The forgeRuntimeLibrary
+        // extension only exists on the Forge/NeoForge Loom platform, so referencing it directly
+        // fails to compile the shared script against a Fabric chunk. This call is inside isForge,
+        // so it only executes where the config exists.
+        "forgeRuntimeLibrary"("io.github.llamalad7:mixinextras-common:${property("mixinextras_version")}")
     }
 
     if (mod.isNeoforge) {
@@ -104,8 +116,8 @@ dependencies {
         // forgeRuntimeLibrary (shared by Forge and NeoForge) — plain runtimeOnly/localRuntime does NOT
         // reach the dev runtime classpath here. Without this KubeJSClient crashes with
         // NoClassDefFoundError: dev.latvian.apps.tinyserver...
-        forgeRuntimeLibrary("dev.latvian.apps:tiny-java-server:${property("tiny_java_server_version")}")
-        forgeRuntimeLibrary("com.github.rtyley:animated-gif-lib-for-java:${property("animated_gif_lib_version")}")
+        "forgeRuntimeLibrary"("dev.latvian.apps:tiny-java-server:${property("tiny_java_server_version")}")
+        "forgeRuntimeLibrary"("com.github.rtyley:animated-gif-lib-for-java:${property("animated_gif_lib_version")}")
         // better-advanced-tooltips is an actual mod, so it stays on modLocalRuntime.
         modLocalRuntime("dev.latvian.mods:better-advanced-tooltips:${property("better_advanced_tooltips_version")}")
 

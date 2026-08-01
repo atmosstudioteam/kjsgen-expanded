@@ -27,14 +27,11 @@ stonecutter {
 
         // Target matrix, brought up incrementally. 1.21.1 is NeoForge-only: KubeJS (the mod's whole
         // reason to exist) has no Fabric build for 1.21.1, so a 1.21.1-fabric target is pointless.
-        // The cross-loader abstraction stays in the code for the older Fabric targets, where KubeJS
-        // does exist, added in later phases:
-        //   mc("1.19.2", "forge", "fabric")
-        //   mc("1.20.1", "forge", "fabric")   // fabric side deferred
-        // 1.20.1 targets Forge (not NeoForge): KubeJS/JEI only ship Forge builds for 1.20.1 —
-        // KubeJS's NeoForge support starts at 1.20.4 — so Forge is the KubeJS-native loader here,
-        // same criterion that made 1.21.1 NeoForge-only.
-        mc("1.20.1", "forge")
+        // On 1.20.1 KubeJS ships BOTH loaders (KubeJS 6 / 2001.x has forge + fabric builds), so 1.20.1
+        // carries both. Note 1.20.1 uses Forge, not NeoForge: KubeJS/JEI have no NeoForge 1.20.1 build
+        // (KubeJS's NeoForge support starts at 1.20.4), same KubeJS-native-loader criterion throughout.
+        //   mc("1.19.2", "forge", "fabric")   // next phase
+        mc("1.20.1", "forge", "fabric")
         mc("1.21.1", "neoforge")
 
         vcsVersion = "1.21.1-neoforge"
