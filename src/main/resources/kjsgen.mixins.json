@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.zizazr.kjsgen.integration.jei.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "plugin": "com.zizazr.kjsgen.integration.jei.mixin.KjsJeiMixinPlugin",
+  "client": [
+    "GuiIconToggleButtonAccessor",
+    "RecipeGuiLayoutsMixin",
+    "RecipeLayoutWithButtonsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

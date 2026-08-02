@@ -11,6 +11,18 @@ modSettings {
     }
 }
 
+// Register the JEI recipe-button mixin config (1.20.1-forge only). Forge in this Architectury-Loom dev
+// setup does NOT pick up `[[mixins]]` from mods.toml. loom.forge.mixinConfig registers it for BOTH the
+// dev runtime and the packaged jar (it adds the MixinConfigs manifest entry itself). NeoForge/Fabric
+// use their own mechanisms (fabric.mod.json "mixins"); only the forge chunk has mixins.
+if (mod.isForge) {
+    loom {
+        forge {
+            mixinConfig("kjsgen.mixins.json")
+        }
+    }
+}
+
 // Modrinth + CurseForge publishing is Stonecraft's built-in mod-publish-plugin. The project ids,
 // tokens and release type come from env vars in CI (MODRINTH_ID/MODRINTH_TOKEN,
 // CURSEFORGE_ID/CURSEFORGE_SLUG/CURSEFORGE_TOKEN, RELEASE_TYPE, DO_PUBLISH); Stonecraft fills in the
@@ -65,11 +77,10 @@ dependencies {
         // Fabric API — required at runtime; Architectury builds its Fabric implementation on top of it.
         modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_version")}")
 
-        // JEI (same version string across loaders): API on the compile classpath, full jar in dev
-        // runtime. On 1.20.1 this is JEI 15, whose recipe-button API doesn't exist, so integration/jei
-        // is compiled out (//? if >=1.21) exactly as on 1.20.1-forge; JEI is still loaded so the dev
-        // client can browse recipes visually.
-        modCompileOnly("mezz.jei:jei-$mc-fabric-api:${property("jei_version")}")
+        // JEI (same version string across loaders). Compile against the FULL jar (not just -api): the
+        // JEI 15 recipe-button mixins in integration/jei/mixin reference JEI's internal gui classes
+        // (mezz.jei.gui.*), which are not in the -api artifact. Full jar in the dev runtime too.
+        modCompileOnly("mezz.jei:jei-$mc-fabric:${property("jei_version")}")
         modLocalRuntime("mezz.jei:jei-$mc-fabric:${property("jei_version")}")
 
         // 1.20.1 is the first Fabric target where KubeJS exists (KubeJS 6 / 2001.x ships a Fabric

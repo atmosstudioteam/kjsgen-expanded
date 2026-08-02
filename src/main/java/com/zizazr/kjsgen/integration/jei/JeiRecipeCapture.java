@@ -2,7 +2,7 @@ package com.zizazr.kjsgen.integration.jei;
 
 // JEI 19 only (bundled with 1.21.x); compiled out on 1.20.1-forge's JEI 15. See KjsgenJeiPlugin.
 //? if >=1.21 {
-import com.zizazr.kjsgen.core.RecipeInstance;
+/*import com.zizazr.kjsgen.core.RecipeInstance;
 import com.zizazr.kjsgen.core.RecipeTypeDefinition;
 import com.zizazr.kjsgen.core.SlotContent;
 import com.zizazr.kjsgen.core.SlotDefinition;
@@ -11,19 +11,19 @@ import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 //? if neoforge
-import mezz.jei.api.neoforge.NeoForgeTypes;
+//import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 //? if neoforge
-import net.neoforged.neoforge.fluids.FluidStack;
+//import net.neoforged.neoforge.fluids.FluidStack;
 
 import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
+/^*
  * Turns the JEI recipe currently shown under an "edit" button into a populated
  * {@link RecipeInstance}. The JEI category is mapped to a hand-authored kjsgen
  * {@link RecipeTypeDefinition} (via {@link JeiLayoutImporter#mappedTypeFor}); the
@@ -33,12 +33,12 @@ import java.util.Optional;
  * <p>Items and fluids are read from what each slot is currently displaying;
  * Mekanism chemicals (and any other non-item/fluid ingredient) are left empty for
  * the user to fill in the editor.
- */
+ ^/
 public final class JeiRecipeCapture {
     private JeiRecipeCapture() {
     }
 
-    /** Captures the displayed recipe, or {@code null} when no kjsgen layout maps to its category. */
+    /^* Captures the displayed recipe, or {@code null} when no kjsgen layout maps to its category. ^/
     @Nullable
     public static RecipeInstance capture(IRecipeLayoutDrawable<?> layout) {
         RecipeTypeDefinition type = JeiLayoutImporter.mappedTypeFor(layout).orElse(null);
@@ -74,12 +74,12 @@ public final class JeiRecipeCapture {
         return recipe;
     }
 
-    /**
+    /^*
      * Fills a role's slot definitions from the captured contents. A fixed slot takes
      * exactly one content (preserving position, so empty grid cells keep later slots
      * aligned); a list slot ("in" for shapeless) absorbs all remaining contents,
      * skipping empties, into its contiguous {@code key + index} entries.
-     */
+     ^/
     private static void assignRole(RecipeInstance recipe, List<SlotDefinition> defs, List<SlotContent> contents) {
         int ci = 0;
         for (SlotDefinition def : defs) {
@@ -110,7 +110,7 @@ public final class JeiRecipeCapture {
         return defs;
     }
 
-    /** Reads the item or fluid a slot is currently displaying; empty for anything else. */
+    /^* Reads the item or fluid a slot is currently displaying; empty for anything else. ^/
     private static SlotContent contentOf(IRecipeSlotView view) {
         Optional<ItemStack> item = view.getDisplayedItemStack();
         if (item.isPresent() && !item.get().isEmpty()) {
@@ -122,14 +122,14 @@ public final class JeiRecipeCapture {
         // different API, so on Fabric fluid slots are left empty for the user to fill in the editor
         // (items still capture normally). See docs/adding-recipe-types.md for the Fabric follow-up.
         //? if neoforge {
-        Optional<FluidStack> fluid = view.getDisplayedIngredient(NeoForgeTypes.FLUID_STACK);
+        /^Optional<FluidStack> fluid = view.getDisplayedIngredient(NeoForgeTypes.FLUID_STACK);
         if (fluid.isPresent() && !fluid.get().isEmpty()) {
             FluidStack stack = fluid.get();
             String id = BuiltInRegistries.FLUID.getKey(stack.getFluid()).toString();
             return SlotContent.fluid(id, stack.getAmount());
         }
-        //?}
+        ^///?}
         return SlotContent.EMPTY;
     }
 }
-//?}
+*///?}

@@ -34,10 +34,10 @@ abstract class VanillaDialogScreen extends Screen {
         // it at the end of the frame, so anything the parent draws would end up
         // painted on top of this dialog.
         //? if >=1.21 {
-        this.renderBackground(g, mouseX, mouseY, partialTick);
-        //?}
+        /*this.renderBackground(g, mouseX, mouseY, partialTick);
+        *///?}
         //? if <1.21 {
-        /*this.renderBackground(g);*/
+        this.renderBackground(g);
         //?}
 
         VanillaTheme.panel(g, dialogX, dialogY, dialogW, dialogH);

@@ -1,9 +1,5 @@
 package com.zizazr.kjsgen.integration.jei;
 
-// The whole JEI integration targets JEI 19 (bundled with 1.21.x). On 1.20.1-forge JEI is v15, whose
-// recipe-button API (IAdvancedRegistration#addRecipeButtonFactory, gui.buttons.*, recipe.advanced.*)
-// does not exist, so the entire package is compiled out there and re-added for JEI 15 in a follow-up.
-//? if >=1.21 {
 import com.zizazr.kjsgen.KjsGen;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -13,13 +9,15 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Captures the JEI runtime so {@link JeiLayoutImporter} can read the recipe
- * categories (and their layouts) that other mods register in their JEI
- * plugins.
+ * The kjsgen JEI plugin: captures the JEI runtime (so the recipe importer can read other mods'
+ * categories) and, on JEI 19 (1.21+), registers the per-recipe "edit"/"remove" buttons.
  *
- * This class is only ever classloaded by JEI itself (via the {@code @JeiPlugin}
- * annotation scan) or from code paths guarded by a "jei is loaded" check, so
- * the hard references to the JEI API are safe.
+ * <p>On JEI 19 the buttons are real recipe buttons ({@code IAdvancedRegistration#addRecipeButtonFactory}).
+ * JEI 15 (1.20.1) has no button API, so there the buttons are drawn by {@link KjsJeiOverlay} (a
+ * RENDER_POST hook that reads JEI's own bookmark-button position) — no plugin registration involved.
+ *
+ * <p>This class is only ever classloaded by JEI itself (via the {@code @JeiPlugin} annotation scan),
+ * so the hard references to the JEI API are safe.
  */
 @JeiPlugin
 public class KjsgenJeiPlugin implements IModPlugin {
@@ -33,8 +31,12 @@ public class KjsgenJeiPlugin implements IModPlugin {
 
     @Override
     public void registerAdvanced(IAdvancedRegistration registration) {
-        registration.addRecipeButtonFactory(new JeiEditButtonController.Factory());
+        // On JEI 15 (1.20.1) there is no recipe-button API — the buttons are drawn by KjsJeiOverlay, so
+        // nothing is registered here. On JEI 19 (1.21+) they are real recipe buttons, registered below.
+        //? if >=1.21 {
+        /*registration.addRecipeButtonFactory(new JeiEditButtonController.Factory());
         registration.addRecipeButtonFactory(new JeiDeleteButtonController.Factory());
+        *///?}
     }
 
     @Override
@@ -52,4 +54,3 @@ public class KjsgenJeiPlugin implements IModPlugin {
         return runtime;
     }
 }
-//?}

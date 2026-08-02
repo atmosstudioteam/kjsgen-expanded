@@ -17,6 +17,9 @@
       "com.zizazr.kjsgen.KjsGenClient"
     ]
   },
+  "mixins": [
+    "kjsgen.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.15.0",
     "minecraft": ">=${minecraftVersion}",

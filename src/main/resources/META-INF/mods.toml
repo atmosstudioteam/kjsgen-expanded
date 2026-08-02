@@ -4,6 +4,8 @@
 modLoader = "javafml"
 loaderVersion = "[47,)"
 license = "All Rights Reserved"
+# NOTE: the JEI recipe-button mixin config is registered via the jar manifest MixinConfigs attribute
+# (see build.gradle.kts) — Forge does not reliably read [[mixins]] here in the Loom dev runtime.
 
 [[mods]]
 modId = "${id}"

@@ -27,8 +27,8 @@ import org.lwjgl.glfw.GLFW;
  * keybind, client tick, resource-reload listener and connect/disconnect hooks via Architectury.
  */
 //? if neoforge {
-@net.neoforged.fml.common.Mod(value = KjsGen.MODID, dist = net.neoforged.api.distmarker.Dist.CLIENT)
-//?}
+/*@net.neoforged.fml.common.Mod(value = KjsGen.MODID, dist = net.neoforged.api.distmarker.Dist.CLIENT)
+*///?}
 public class KjsGenClient
         //? if fabric
         /*implements net.fabricmc.api.ClientModInitializer*/
@@ -41,10 +41,10 @@ public class KjsGenClient
     );
 
     //? if neoforge {
-    public KjsGenClient(net.neoforged.fml.ModContainer container) {
+    /*public KjsGenClient(net.neoforged.fml.ModContainer container) {
         initClient();
     }
-    //?}
+    *///?}
 
     //? if fabric {
     /*@Override
@@ -67,29 +67,29 @@ public class KjsGenClient
         // Architectury has no cross-loader screen-render-post event, so the collab-cursor overlay is
         // Forge-family-only for now; the Fabric equivalent (a mixin or fabric-api ScreenEvents) is a follow-up.
         //? if neoforge {
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(KjsGenClient::onScreenRenderPost);
-        //?}
+        /*net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(KjsGenClient::onScreenRenderPost);
+        *///?}
         //? if forge {
-        /*net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(KjsGenClient::onScreenRenderPost);*/
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(KjsGenClient::onScreenRenderPost);
         //?}
     }
 
     //? if neoforge {
-    /** Top-most overlay: remote cursors float above the editor and any of its sub-dialogs. */
+    /*/^* Top-most overlay: remote cursors float above the editor and any of its sub-dialogs. ^/
     static void onScreenRenderPost(net.neoforged.neoforge.client.event.ScreenEvent.Render.Post event) {
         if (com.zizazr.kjsgen.ui.vanilla.CollabScreens.isEditorContext(event.getScreen())) {
             com.zizazr.kjsgen.ui.vanilla.CollabCursors.render(event.getGuiGraphics());
         }
     }
-    //?}
+    *///?}
 
     //? if forge {
-    /*// Top-most overlay: remote cursors float above the editor and any of its sub-dialogs.
+    // Top-most overlay: remote cursors float above the editor and any of its sub-dialogs.
     static void onScreenRenderPost(net.minecraftforge.client.event.ScreenEvent.Render.Post event) {
         if (com.zizazr.kjsgen.ui.vanilla.CollabScreens.isEditorContext(event.getScreen())) {
             com.zizazr.kjsgen.ui.vanilla.CollabCursors.render(event.getGuiGraphics());
         }
-    }*/
+    }
     //?}
 
     static void onClientTick(Minecraft minecraft) {

@@ -59,45 +59,45 @@ public final class MekanismChemicals {
     /** Chemicals matching {@code query} (id or lower-cased display name), up to {@code cap}. */
     public static List<ChemicalInfo> search(String query, int cap) {
         //? if neoforge {
-        return available() ? Impl.search(query, cap) : List.of();
-        //?}
+        /*return available() ? Impl.search(query, cap) : List.of();
+        *///?}
         //? if fabric || forge {
-        /*return List.of();*/
+        return List.of();
         //?}
     }
 
     /** Chemical tags matching {@code query}; icon/tint come from the first tag member. */
     public static List<ChemicalInfo> searchTags(String query, int cap) {
         //? if neoforge {
-        return available() ? Impl.searchTags(query, cap) : List.of();
-        //?}
+        /*return available() ? Impl.searchTags(query, cap) : List.of();
+        *///?}
         //? if fabric || forge {
-        /*return List.of();*/
+        return List.of();
         //?}
     }
 
     public static Optional<ChemicalInfo> byId(String id) {
         //? if neoforge {
-        return available() ? Impl.byId(id) : Optional.empty();
-        //?}
+        /*return available() ? Impl.byId(id) : Optional.empty();
+        *///?}
         //? if fabric || forge {
-        /*return Optional.empty();*/
+        return Optional.empty();
         //?}
     }
 
     /** First chemical of a tag, for rendering tag contents. */
     public static Optional<ChemicalInfo> tagSample(String tagId) {
         //? if neoforge {
-        return available() ? Impl.tagSample(tagId) : Optional.empty();
-        //?}
+        /*return available() ? Impl.tagSample(tagId) : Optional.empty();
+        *///?}
         //? if fabric || forge {
-        /*return Optional.empty();*/
+        return Optional.empty();
         //?}
     }
 
     /** The only class that touches Mekanism types; never loaded when Mekanism is absent. */
     //? if neoforge {
-    private static final class Impl {
+    /*private static final class Impl {
         static List<ChemicalInfo> search(String query, int cap) {
             List<ChemicalInfo> out = new ArrayList<>();
             for (mekanism.api.chemical.Chemical chemical : mekanism.api.MekanismAPI.CHEMICAL_REGISTRY) {
@@ -170,5 +170,5 @@ public final class MekanismChemicals {
                     chemical.getIcon(), chemical.getTint());
         }
     }
-    //?}
+    *///?}
 }

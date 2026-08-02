@@ -77,10 +77,10 @@ final class CollabHeads {
         if (info != null) {
             // 1.21 resolves a PlayerSkin; 1.20.1 exposes the skin as a ResourceLocation.
             //? if >=1.21 {
-            PlayerFaceRenderer.draw(g, info.getSkin(), fx, fy, FACE);
-            //?}
+            /*PlayerFaceRenderer.draw(g, info.getSkin(), fx, fy, FACE);
+            *///?}
             //? if <1.21 {
-            /*PlayerFaceRenderer.draw(g, info.getSkinLocation(), fx, fy, FACE);*/
+            PlayerFaceRenderer.draw(g, info.getSkinLocation(), fx, fy, FACE);
             //?}
         } else {
             g.fill(fx, fy, fx + FACE, fy + FACE, color);

@@ -2,7 +2,7 @@ package com.zizazr.kjsgen.integration.jei;
 
 // JEI 19 only (bundled with 1.21.x); compiled out on 1.20.1-forge's JEI 15. See KjsgenJeiPlugin.
 //? if >=1.21 {
-import com.zizazr.kjsgen.KjsGen;
+/*import com.zizazr.kjsgen.KjsGen;
 import com.zizazr.kjsgen.KjsGenClient;
 import com.zizazr.kjsgen.core.RecipeInstance;
 import mezz.jei.api.gui.IRecipeLayoutDrawable;
@@ -14,7 +14,7 @@ import mezz.jei.api.gui.inputs.IJeiUserInput;
 import mezz.jei.api.recipe.advanced.IRecipeButtonControllerFactory;
 import net.minecraft.network.chat.Component;
 
-/**
+/^*
  * The per-recipe "edit in kjsgen" button JEI draws next to each recipe layout.
  * Because JEI stacks extra buttons upward from the transfer button, this lands
  * directly above the bookmark ("favorites") button. Pressing it captures the
@@ -24,7 +24,7 @@ import net.minecraft.network.chat.Component;
  *
  * @see JeiRecipeCapture
  * @see KjsGenClient#openEditorWithCapturedRecipe(RecipeInstance)
- */
+ ^/
 final class JeiEditButtonController implements IIconButtonController {
     private final IDrawable icon;
     private final IRecipeLayoutDrawable<?> layout;
@@ -61,7 +61,7 @@ final class JeiEditButtonController implements IIconButtonController {
         return true;
     }
 
-    /** Registered with JEI in {@code registerAdvanced}; makes one controller per recipe layout. */
+    /^* Registered with JEI in {@code registerAdvanced}; makes one controller per recipe layout. ^/
     static final class Factory implements IRecipeButtonControllerFactory {
         private final IDrawable icon = new KjsEditIcon("jei_edit.png", 16);
 
@@ -76,4 +76,4 @@ final class JeiEditButtonController implements IIconButtonController {
         }
     }
 }
-//?}
+*///?}

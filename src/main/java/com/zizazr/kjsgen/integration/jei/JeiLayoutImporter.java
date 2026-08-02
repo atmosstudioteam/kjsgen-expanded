@@ -2,7 +2,7 @@ package com.zizazr.kjsgen.integration.jei;
 
 // JEI 19 only (bundled with 1.21.x); compiled out on 1.20.1-forge's JEI 15. See KjsgenJeiPlugin.
 //? if >=1.21 {
-import com.zizazr.kjsgen.KjsGen;
+/*import com.zizazr.kjsgen.KjsGen;
 import com.zizazr.kjsgen.core.LayoutDecoration;
 import com.zizazr.kjsgen.core.ParameterDefinition;
 import com.zizazr.kjsgen.core.RecipeTypeDefinition;
@@ -14,7 +14,7 @@ import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 //? if neoforge
-import mezz.jei.api.neoforge.NeoForgeTypes;
+//import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.IRecipeManager;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/**
+/^*
  * Reads the recipe categories other mods registered in their JEI plugins and
  * converts them into kjsgen {@link RecipeTypeDefinition}s: for every category
  * a sample recipe is laid out through JEI's own
@@ -43,9 +43,9 @@ import java.util.Set;
  * The KubeJS syntax for imported types cannot be known from JEI, so each
  * imported type gets an editable {@code template} parameter with a best-guess
  * default ({@code event.recipes.<mod>.<type>([{outputs}], [{inputs}])}).
- */
+ ^/
 public final class JeiLayoutImporter {
-    /** Namespaces whose categories are skipped: covered by builtins or not real recipes. */
+    /^* Namespaces whose categories are skipped: covered by builtins or not real recipes. ^/
     private static final Set<String> SKIPPED_NAMESPACES = Set.of("minecraft", "jei");
 
     public record ImportReport(int imported, int skipped, List<String> errors) {
@@ -54,12 +54,12 @@ public final class JeiLayoutImporter {
     private JeiLayoutImporter() {
     }
 
-    /** Whether the JEI runtime is up (JEI installed and world loaded). */
+    /^* Whether the JEI runtime is up (JEI installed and world loaded). ^/
     public static boolean isRuntimeAvailable() {
         return KjsgenJeiPlugin.runtime() != null;
     }
 
-    /** Imports all foreign JEI categories, registers them and persists them as JSON layouts. */
+    /^* Imports all foreign JEI categories, registers them and persists them as JSON layouts. ^/
     public static ImportReport importAll() {
         IJeiRuntime runtime = KjsgenJeiPlugin.runtime();
         if (runtime == null) {
@@ -112,12 +112,12 @@ public final class JeiLayoutImporter {
         return buildDefinition(category, layout.get());
     }
 
-    /**
+    /^*
      * Maps a laid-out JEI recipe onto the hand-authored kjsgen layout registered for its
      * category — looked up by the layout's {@code jeiCategory} field (e.g. "create:pressing").
      * Returns empty when no layout implements that category, so the "Edit in kjsgen" button
      * only appears for recipes we can actually generate KubeJS for (no on-the-fly generation).
-     */
+     ^/
     public static <T> Optional<RecipeTypeDefinition> mappedTypeFor(IRecipeLayoutDrawable<T> layout) {
         String jeiUid = layout.getRecipeCategory().getRecipeType().getUid().toString();
         Optional<RecipeTypeDefinition> mapped = RecipeTypeRegistry.getByJeiCategory(jeiUid);
@@ -137,7 +137,7 @@ public final class JeiLayoutImporter {
         return mapped;
     }
 
-    /** Picks the specific kjsgen type id for JEI categories that back two of them, else null. */
+    /^* Picks the specific kjsgen type id for JEI categories that back two of them, else null. ^/
     private static String refineSharedCategory(String jeiUid, Object recipe) {
         Object value = recipe instanceof RecipeHolder<?> holder ? holder.value() : recipe;
         return switch (jeiUid) {
@@ -149,7 +149,7 @@ public final class JeiLayoutImporter {
         };
     }
 
-    /** Derives a kjsgen {@link RecipeTypeDefinition} from a laid-out JEI recipe (slot positions + roles). */
+    /^* Derives a kjsgen {@link RecipeTypeDefinition} from a laid-out JEI recipe (slot positions + roles). ^/
     public static <T> Optional<RecipeTypeDefinition> buildDefinition(IRecipeCategory<T> category,
                                                                      IRecipeLayoutDrawable<T> layout) {
         List<IRecipeSlotView> slotViews = layout.getRecipeSlotsView().getSlotViews();
@@ -187,10 +187,10 @@ public final class JeiLayoutImporter {
             // JEI Fabric exposes fluids through a different API; on Fabric we treat slots as item-only
             // when importing a category layout (the editor still lets the user enable fluids per slot).
             //? if neoforge {
-            boolean hasFluids = slotView.getIngredients(NeoForgeTypes.FLUID_STACK).findAny().isPresent();
-            //?}
+            /^boolean hasFluids = slotView.getIngredients(NeoForgeTypes.FLUID_STACK).findAny().isPresent();
+            ^///?}
             //? if fabric {
-            /*boolean hasFluids = false;*/
+            /^boolean hasFluids = false;^/
             //?}
             if (!hasItems && !hasFluids) {
                 hasItems = true; // empty sample slot: assume items
@@ -263,7 +263,7 @@ public final class JeiLayoutImporter {
         ));
     }
 
-    /** A JEI-style arrow centered in the gap between inputs and outputs (best effort). */
+    /^* A JEI-style arrow centered in the gap between inputs and outputs (best effort). ^/
     private static LayoutDecoration arrowBetween(List<SlotDefinition> slots) {
         int inputsRight = slots.stream()
                 .filter(s -> s.role() != SlotRole.OUTPUT)
@@ -281,4 +281,4 @@ public final class JeiLayoutImporter {
         return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
     }
 }
-//?}
+*///?}

@@ -2,7 +2,7 @@ package com.zizazr.kjsgen.integration.jei;
 
 // JEI 19 only (bundled with 1.21.x); compiled out on 1.20.1-forge's JEI 15. See KjsgenJeiPlugin.
 //? if >=1.21 {
-import com.zizazr.kjsgen.KjsGen;
+/*import com.zizazr.kjsgen.KjsGen;
 import com.zizazr.kjsgen.KjsGenClient;
 import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.gui.builder.ITooltipBuilder;
@@ -14,14 +14,14 @@ import mezz.jei.api.recipe.advanced.IRecipeButtonControllerFactory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-/**
+/^*
  * The per-recipe "remove with kjsgen" button JEI draws next to each recipe layout
  * (stacked with the {@link JeiEditButtonController "edit"} button). Pressing it
  * adds the shown recipe's id to the current project's removal rules and opens
  * the removals screen on that rule.
  *
  * @see KjsGenClient#openRemovalsForRecipeId(String)
- */
+ ^/
 final class JeiDeleteButtonController implements IIconButtonController {
     private final IDrawable icon;
     private final ResourceLocation recipeId;
@@ -55,7 +55,7 @@ final class JeiDeleteButtonController implements IIconButtonController {
         return true;
     }
 
-    /** Registered with JEI in {@code registerAdvanced}; makes one controller per recipe layout. */
+    /^* Registered with JEI in {@code registerAdvanced}; makes one controller per recipe layout. ^/
     static final class Factory implements IRecipeButtonControllerFactory {
         private final IDrawable icon = new KjsEditIcon("jei_delete.png", 8);
 
@@ -72,4 +72,4 @@ final class JeiDeleteButtonController implements IIconButtonController {
         }
     }
 }
-//?}
+*///?}

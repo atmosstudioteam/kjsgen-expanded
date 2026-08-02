@@ -774,10 +774,10 @@ public class VanillaEditorScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         //? if >=1.21 {
-        this.renderBackground(g, mouseX, mouseY, partialTick);
-        //?}
+        /*this.renderBackground(g, mouseX, mouseY, partialTick);
+        *///?}
         //? if <1.21 {
-        /*this.renderBackground(g);*/
+        this.renderBackground(g);
         //?}
         this.localMouseX = mouseX;
         this.localMouseY = mouseY;
@@ -1516,13 +1516,13 @@ public class VanillaEditorScreen extends Screen {
 
     @Override
     //? if >=1.21 {
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    /*public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) {
-    //?}
-    //? if <1.21 {
-    /*public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
-        if (super.mouseScrolled(mouseX, mouseY, scrollY)) {
     *///?}
+    //? if <1.21 {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
+        if (super.mouseScrolled(mouseX, mouseY, scrollY)) {
+    //?}
             return true;
         }
         int delta = (int) (-scrollY * ROW_H);

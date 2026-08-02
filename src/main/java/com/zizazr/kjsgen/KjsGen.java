@@ -21,10 +21,10 @@ import org.slf4j.Logger;
  * cross-loader events via the Architectury API.
  */
 //? if neoforge {
-@net.neoforged.fml.common.Mod(KjsGen.MODID)
-//?}
+/*@net.neoforged.fml.common.Mod(KjsGen.MODID)
+*///?}
 //? if forge {
-/*@net.minecraftforge.fml.common.Mod(KjsGen.MODID)*/
+@net.minecraftforge.fml.common.Mod(KjsGen.MODID)
 //?}
 public class KjsGen
         //? if fabric
@@ -40,27 +40,27 @@ public class KjsGen
      */
     public static net.minecraft.resources.ResourceLocation rl(String path) {
         //? if >=1.21 {
-        return net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, path);
-        //?}
+        /*return net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, path);
+        *///?}
         //? if <1.21 {
-        /*return new net.minecraft.resources.ResourceLocation(MODID, path);*/
+        return new net.minecraft.resources.ResourceLocation(MODID, path);
         //?}
     }
 
     //? if neoforge {
-    public KjsGen(net.neoforged.bus.api.IEventBus modEventBus, net.neoforged.fml.ModContainer modContainer) {
+    /*public KjsGen(net.neoforged.bus.api.IEventBus modEventBus, net.neoforged.fml.ModContainer modContainer) {
         init();
     }
-    //?}
+    *///?}
 
     //? if forge {
-    /*public KjsGen() {
+    public KjsGen() {
         init();
         // Forge allows only one @Mod class per mod (unlike NeoForge/Fabric's separate client
         // entrypoint), so trigger the client bootstrap here, classloaded on the client dist only.
         net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
                 () -> KjsGenClient::initClient);
-    }*/
+    }
     //?}
 
     //? if fabric {
