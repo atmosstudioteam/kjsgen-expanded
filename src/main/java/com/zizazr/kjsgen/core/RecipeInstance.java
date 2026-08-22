@@ -157,10 +157,11 @@ public final class RecipeInstance {
     }
 
     /**
-     * Keep a readable, deterministic id in sync with the first output while the
-     * id is still automatic. Example:
-     * {@code kjsgen:spectrum_pedestal + minecraft:diamond ->
-     * conflux:spectrum_pedestal/minecraft/diamond}.
+     * Keep a readable deterministic id in sync with the first output while the id
+     * is still automatic. Format:
+     * conflux:<output_mod_id>/<machine_or_recipe_type>/<output_item_id>.
+     * Example: minecraft:diamond in a Spectrum pedestal recipe becomes
+     * conflux:minecraft/pedestal/diamond.
      */
     private void refreshAutoRecipeId() {
         if (!autoRecipeId && !recipeId.isEmpty()) {
@@ -175,10 +176,65 @@ public final class RecipeInstance {
             return;
         }
 
-        String typePath = typeId.contains(":") ? typeId.substring(typeId.indexOf(':') + 1) : typeId;
-        String outputPath = output.id().replace(':', '/');
-        recipeId = "conflux:" + typePath + "/" + outputPath;
+        String outputId = output.id();
+        int colon = outputId.indexOf(':');
+        String outputMod = colon > 0 ? outputId.substring(0, colon) : "minecraft";
+        String outputPath = colon >= 0 ? outputId.substring(colon + 1) : outputId;
+        String machinePath = autoRecipeMachinePath();
+
+        recipeId = "conflux:" + outputMod + "/" + machinePath + "/" + outputPath;
         autoRecipeId = true;
+    }
+
+    /**
+     * Human-facing machine/recipe id used in the middle section of automatic ids.
+     * Integration prefixes are stripped: spectrum_pedestal -> pedestal and
+     * mi_macerator -> macerator. Custom MI machines use the configured machine id.
+     */
+    private String autoRecipeMachinePath() {
+        String path = typeId.contains(":") ? typeId.substring(typeId.indexOf(':') + 1) : typeId;
+
+        if (path.equals("mi_custom_machine")) {
+            String machine = parameterValue("__machine");
+            if (machine.isEmpty()) {
+                machine = parameterValue("machineType");
+            }
+            return machine.isEmpty() ? "custom_machine" : resourcePath(machine);
+        }
+
+        if (path.startsWith("mi_")) {
+            return path.substring(3);
+        }
+
+        if (path.equals("spectrum_raw")) {
+            String serializer = parameterValue("serializer");
+            return serializer.isEmpty() ? "raw" : resourcePath(serializer);
+        }
+
+        if (path.startsWith("spectrum_")) {
+            return path.substring("spectrum_".length());
+        }
+
+        return path;
+    }
+
+    /** Stored parameter value, falling back to the recipe type's declared default. */
+    private String parameterValue(String key) {
+        String stored = parameters.get(key);
+        if (stored != null && !stored.isBlank()) {
+            return stored.trim();
+        }
+        return RecipeTypeRegistry.get(typeId)
+                .flatMap(type -> type.parameter(key))
+                .map(ParameterDefinition::defaultValue)
+                .orElse("")
+                .trim();
+    }
+
+    /** Path part of a resource location; "mod:machine" -> "machine". */
+    private static String resourcePath(String id) {
+        int colon = id.indexOf(':');
+        return colon >= 0 ? id.substring(colon + 1) : id;
     }
 
     /** First output-like slot used for automatic ids. */
@@ -280,6 +336,7 @@ public final class RecipeInstance {
         } else {
             parameters.put(key, value);
         }
+        refreshAutoRecipeId();
     }
 
     public Map<String, String> parameters() {
