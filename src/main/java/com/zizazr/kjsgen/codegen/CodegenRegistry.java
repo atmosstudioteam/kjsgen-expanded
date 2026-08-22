@@ -4,11 +4,14 @@ import com.zizazr.kjsgen.codegen.handlers.BrewingRecipeCodegen;
 import com.zizazr.kjsgen.codegen.handlers.CookingRecipeCodegen;
 import com.zizazr.kjsgen.codegen.handlers.CreateMechanicalCraftingCodegen;
 import com.zizazr.kjsgen.codegen.handlers.CreateSequencedAssemblyCodegen;
+import com.zizazr.kjsgen.codegen.handlers.ModernIndustrializationRecipeCodegen;
 import com.zizazr.kjsgen.codegen.handlers.ShapedRecipeCodegen;
 import com.zizazr.kjsgen.codegen.handlers.ShapelessRecipeCodegen;
 import com.zizazr.kjsgen.codegen.handlers.SmithingRecipeCodegen;
+import com.zizazr.kjsgen.codegen.handlers.SpectrumRecipeCodegen;
 import com.zizazr.kjsgen.codegen.handlers.StonecuttingRecipeCodegen;
 import com.zizazr.kjsgen.codegen.handlers.TemplateRecipeCodegen;
+import com.zizazr.kjsgen.templates.IntegrationRecipeTypes;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -46,7 +49,13 @@ public final class CodegenRegistry {
         // Create recipe types that need a custom generator (variable grid / stage chain).
         register("kjsgen:create_mechanical_crafting", new CreateMechanicalCraftingCodegen());
         register("kjsgen:create_sequenced_assembly", new CreateSequencedAssemblyCodegen());
+        // Modern Industrialization and Spectrum need custom codegen because their
+        // recipe formats cannot be represented by one template string.
+        register("kjsgen:modern_industrialization", new ModernIndustrializationRecipeCodegen());
+        register("kjsgen:spectrum", new SpectrumRecipeCodegen());
         // Data-driven codegen for addon types declared purely in JSON.
         register("kjsgen:template", new TemplateRecipeCodegen());
+        // Built-in UI layouts for MI and Spectrum (gated by requiresMod).
+        IntegrationRecipeTypes.register();
     }
 }
