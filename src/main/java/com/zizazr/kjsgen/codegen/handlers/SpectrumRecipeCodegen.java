@@ -64,9 +64,48 @@ public final class SpectrumRecipeCodegen implements RecipeCodegen {
         if(!r.recipeId().isEmpty()) js.append(".id(").append(JsUtil.quote(r.recipeId())).append(')');
         return js.toString();
     }
-    private static void pedestal(Obj o,RecipeInstance r,RecipeTypeDefinition t){o.integer("time",r.paramInt(t,"time",200)).str("tier",r.param(t,"tier"))
-            .raw("colors",raw(r.param(t,"colorsJson"),"{}")).num("experience",r.param(t,"experience"));
-        if(r.paramBool(t,"disableYieldUpgrades",false))o.bool("disable_yield_upgrades",true); if(r.paramBool(t,"skipRecipeRemainders",false))o.bool("skip_recipe_remainders",true);}
+
+    private static void pedestal(Obj o,RecipeInstance r,RecipeTypeDefinition t){
+        o.integer("time",r.paramInt(t,"time",200)).str("tier",r.param(t,"tier"))
+                .raw("colors",pedestalColors(r,t)).num("experience",r.param(t,"experience"));
+        if(r.paramBool(t,"disableYieldUpgrades",false))o.bool("disable_yield_upgrades",true);
+        if(r.paramBool(t,"skipRecipeRemainders",false))o.bool("skip_recipe_remainders",true);
+    }
+
+    /**
+     * Convert the dedicated Gemstone Powder editor slots to Spectrum's color-cost object.
+     * The mapping is taken from Spectrum 1.12.5 BuiltinGemstoneColor#getGemstonePowderItem().
+     * Duplicate powder entries are merged. If no recognized powder slot is populated,
+     * fall back to the legacy colorsJson parameter so old projects remain loadable.
+     */
+    private static String pedestalColors(RecipeInstance r,RecipeTypeDefinition t){
+        LinkedHashMap<String,Integer> colors=new LinkedHashMap<>();
+        for(SlotContent powder:r.listSlots("powders")){
+            if(powder.isEmpty())continue;
+            String color=powderColor(powder.id());
+            if(color!=null)colors.merge(color,Math.max(1,powder.count()),Integer::sum);
+        }
+        if(colors.isEmpty())return raw(r.param(t,"colorsJson"),"{}");
+        StringBuilder b=new StringBuilder("{");
+        int i=0;
+        for(var e:colors.entrySet()){
+            if(i++>0)b.append(", ");
+            b.append(JsUtil.quote(e.getKey())).append(": ").append(e.getValue());
+        }
+        return b.append('}').toString();
+    }
+
+    private static String powderColor(String itemId){
+        return switch(itemId){
+            case "spectrum:topaz_powder" -> "spectrum:cyan";
+            case "spectrum:amethyst_powder" -> "spectrum:magenta";
+            case "spectrum:citrine_powder" -> "spectrum:yellow";
+            case "spectrum:onyx_powder" -> "spectrum:black";
+            case "spectrum:moonstone_powder" -> "spectrum:white";
+            default -> null;
+        };
+    }
+
     private static void fluid(Obj o,RecipeInstance r,String slot,String key){SlotContent c=r.slot(slot);if(!c.isEmpty())o.raw(key,"{ "+(c.kind()==ContentKind.FLUID_TAG?"tag":"fluid")+": "+JsUtil.quote(c.id())+(c.amount()!=1000?", amount: "+c.amount():"")+" }");}
     private static void slotStr(Obj o,RecipeInstance r,String k){slotStr(o,r,k,k);} private static void slotStr(Obj o,RecipeInstance r,String s,String k){SlotContent c=r.slot(s);if(!c.isEmpty())o.str(k,(c.kind()==ContentKind.ITEM_TAG?"#":"")+c.id());}
     private static String ingredient(SlotContent c,boolean count){String k=c.kind()==ContentKind.ITEM_TAG?"tag":"item";return "{ "+k+": "+JsUtil.quote(c.id())+(count&&c.count()>1?", count: "+c.count():"")+" }";}
