@@ -1,1 +1,2 @@
 Temporary file used to verify GitHub Actions after enabling workflows.
+Trigger pull_request synchronization after CI workflow activation.
