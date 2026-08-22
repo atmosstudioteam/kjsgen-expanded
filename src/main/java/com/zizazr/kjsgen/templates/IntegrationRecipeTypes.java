@@ -33,9 +33,14 @@ public final class IntegrationRecipeTypes {
         sp("gated_crafting_shapeless","minecraft:crafting_table",List.of(list("ingredients",SlotRole.INPUT,0,0,true,true,false,true,false),i("output",SlotRole.OUTPUT,94,18,true,false,true)),List.of());
         sp("ink_converting","spectrum:color_picker",List.of(list("ingredient",SlotRole.INPUT,0,9,true,true,false,false,false)),List.of(ps("inkColor","spectrum:white"),pi("amount",1)));
         conv("liquid_crystal_converting","spectrum:liquid_crystal_bucket");conv("midnight_solution_converting","spectrum:midnight_solution_bucket");
-        List<ParameterDefinition> ped=List.of(pi("time",200),pe("tier","basic","basic","simple","advanced","complex"),ps("colorsJson","{}"),pf("experience",0),pb("disableYieldUpgrades",false),pb("skipRecipeRemainders",false));
+        // colorsJson intentionally stays out of the visible parameter list. Old saved projects that
+        // already contain it still work because RecipeInstance.param() reads stored params first.
+        List<ParameterDefinition> ped=List.of(pi("time",200),pe("tier","basic","basic","simple","advanced","complex"),pf("experience",0),pb("disableYieldUpgrades",false),pb("skipRecipeRemainders",false));
         shaped("pedestal","spectrum:pedestal_all_basic",ped);
-        sp("pedestal_shapeless","spectrum:pedestal_all_basic",List.of(list("ingredients",SlotRole.INPUT,0,0,true,true,false,true,false),i("output",SlotRole.OUTPUT,94,18,true,false,true)),ped);
+        sp("pedestal_shapeless","spectrum:pedestal_all_basic",List.of(
+                list("ingredients",SlotRole.INPUT,0,0,true,true,false,true,false),
+                i("output",SlotRole.OUTPUT,94,18,true,false,true),
+                list("powders",SlotRole.CATALYST,0,72,false,false,false,true,false)),ped);
         sp("potion_workshop_brewing","spectrum:potion_workshop",List.of(i("ingredient1",SlotRole.INPUT,0,0,false,true,false),i("ingredient2",SlotRole.INPUT,18,0,false,true,false),i("ingredient3",SlotRole.INPUT,36,0,false,true,false)),List.of(ps("effect","minecraft:speed"),pi("baseDurationTicks",200),pf("potencyModifier",1),pi("potencyHardCap",0),pi("baseYield",0),pb("applicableToPotions",true),pb("applicableToTippedArrows",true),pb("applicableToPotionFillables",true),ps("inkColor","spectrum:white"),pi("inkCost",1)));
         sp("potion_workshop_crafting","spectrum:potion_workshop",List.of(i("baseIngredient",SlotRole.INPUT,0,18,true,true,false),i("ingredient1",SlotRole.INPUT,18,0,false,true,false),i("ingredient2",SlotRole.INPUT,36,0,false,true,false),i("ingredient3",SlotRole.INPUT,54,0,false,true,false),i("output",SlotRole.OUTPUT,108,18,true,false,true)),List.of(pb("useUpBaseIngredient",true),pi("color",0xffffff),pi("requiredExperience",0)));
         sp("potion_workshop_reacting","spectrum:potion_workshop",List.of(i("input",SlotRole.INPUT,0,9,true,false,false)),List.of(ps("modifiersJson","{}")));
@@ -45,8 +50,19 @@ public final class IntegrationRecipeTypes {
         List<ParameterDefinition> raw=new ArrayList<>(common("raw"));raw.add(0,ps("serializer","spectrum:clear_ink"));reg("spectrum_raw",SP,"spectrum:pedestal_all_basic",90,36,List.of(),raw,"kjsgen:spectrum");
     }
     private static void conv(String n,String icon){sp(n,icon,List.of(list("ingredient",SlotRole.INPUT,0,9,true,true,false,false,false),i("output",SlotRole.OUTPUT,72,9,true,false,true)),List.of());}
-    private static void shaped(String n,String icon,List<ParameterDefinition> params){List<SlotDefinition>s=new ArrayList<>();for(int y=0;y<3;y++)for(int x=0;x<3;x++)s.add(i("in"+(y*3+x),SlotRole.INPUT,x*18,y*18,false,true,false));s.add(i("output",SlotRole.OUTPUT,94,18,true,false,true));sp(n,icon,s,params);}
-    private static void sp(String n,String icon,List<SlotDefinition>s,List<ParameterDefinition>p){List<ParameterDefinition>a=new ArrayList<>(p);a.addAll(common(n));reg("spectrum_"+n,SP,icon,126,54,s,a,"kjsgen:spectrum");}
+    private static void shaped(String n,String icon,List<ParameterDefinition> params){
+        List<SlotDefinition>s=new ArrayList<>();
+        for(int y=0;y<3;y++)for(int x=0;x<3;x++)s.add(i("in"+(y*3+x),SlotRole.INPUT,x*18,y*18,false,true,false));
+        s.add(i("output",SlotRole.OUTPUT,94,18,true,false,true));
+        if(n.equals("pedestal")){
+            // Spectrum pedestal powders are a separate resource from the 3x3 ingredient grid.
+            // The list wraps after three entries, leaving room for all five built-in powders.
+            s.add(list("powders",SlotRole.CATALYST,0,60,false,false,false,true,false));
+            List<ParameterDefinition>a=new ArrayList<>(params);a.addAll(common(n));
+            reg("spectrum_"+n,SP,icon,126,96,s,a,"kjsgen:spectrum");
+        }else sp(n,icon,s,params);
+    }
+    private static void sp(String n,String icon,List<SlotDefinition>s,List<ParameterDefinition>p){List<ParameterDefinition>a=new ArrayList<>(p);a.addAll(common(n));int h=n.equals("pedestal_shapeless")?108:54;reg("spectrum_"+n,SP,icon,126,h,s,a,"kjsgen:spectrum");}
     private static List<ParameterDefinition> common(String n){return List.of(ps("requiredAdvancement",""),ps("revealSecretAdvancement",""),ps("extraJson",""),ps("__spectrumType",n));}
 
     private static void reg(String id,String mod,String icon,int w,int h,List<SlotDefinition>s,List<ParameterDefinition>p,String codegen){RecipeTypeRegistry.register(new RecipeTypeDefinition("kjsgen:"+id,mod,icon,w,h,List.copyOf(s),List.of(LayoutDecoration.arrow(61,19)),List.copyOf(p),codegen,mod));}

@@ -16,6 +16,8 @@ public final class RecipeInstance {
     private String typeId;
     /** Optional explicit recipe id ("mypack:my_recipe"); empty = let KubeJS auto-generate. */
     private String recipeId = "";
+    /** True while recipeId is maintained automatically from the primary output. */
+    private boolean autoRecipeId = false;
     /** Optional recipe group. */
     private String group = "";
     /** Optional human comment emitted above the generated line. */
@@ -50,8 +52,14 @@ public final class RecipeInstance {
         return recipeId;
     }
 
+    /**
+     * Explicit user edits always take ownership of the id. Once a custom id is
+     * entered, later output changes do not overwrite it. Clearing the field lets
+     * automatic id generation resume the next time the recipe output changes.
+     */
     public void setRecipeId(String recipeId) {
         this.recipeId = recipeId == null ? "" : recipeId.trim();
+        this.autoRecipeId = false;
     }
 
     public String group() {
@@ -104,6 +112,7 @@ public final class RecipeInstance {
         } else {
             slots.put(key, content);
         }
+        refreshAutoRecipeId();
     }
 
     public Map<String, SlotContent> slots() {
@@ -144,6 +153,110 @@ public final class RecipeInstance {
         for (int i = 0; i < entries.size(); i++) {
             slots.put(baseKey + i, entries.get(i));
         }
+        refreshAutoRecipeId();
+    }
+
+    /**
+     * Keep a readable deterministic id in sync with the first output while the id
+     * is still automatic. Format:
+     * conflux:<output_mod_id>/<machine_or_recipe_type>/<output_item_id>.
+     * Example: minecraft:diamond in a Spectrum pedestal recipe becomes
+     * conflux:minecraft/pedestal/diamond.
+     */
+    private void refreshAutoRecipeId() {
+        if (!autoRecipeId && !recipeId.isEmpty()) {
+            return; // user supplied a custom id
+        }
+
+        SlotContent output = primaryOutput();
+        if (output.isEmpty()) {
+            if (autoRecipeId) {
+                recipeId = "";
+            }
+            return;
+        }
+
+        String outputId = output.id();
+        int colon = outputId.indexOf(':');
+        String outputMod = colon > 0 ? outputId.substring(0, colon) : "minecraft";
+        String outputPath = colon >= 0 ? outputId.substring(colon + 1) : outputId;
+        String machinePath = autoRecipeMachinePath();
+
+        recipeId = "conflux:" + outputMod + "/" + machinePath + "/" + outputPath;
+        autoRecipeId = true;
+    }
+
+    /**
+     * Human-facing machine/recipe id used in the middle section of automatic ids.
+     * Integration prefixes are stripped: spectrum_pedestal -> pedestal and
+     * mi_macerator -> macerator. Custom MI machines use the configured machine id.
+     */
+    private String autoRecipeMachinePath() {
+        String path = typeId.contains(":") ? typeId.substring(typeId.indexOf(':') + 1) : typeId;
+
+        if (path.equals("mi_custom_machine")) {
+            String machine = parameterValue("__machine");
+            if (machine.isEmpty()) {
+                machine = parameterValue("machineType");
+            }
+            return machine.isEmpty() ? "custom_machine" : resourcePath(machine);
+        }
+
+        if (path.startsWith("mi_")) {
+            return path.substring(3);
+        }
+
+        if (path.equals("spectrum_raw")) {
+            String serializer = parameterValue("serializer");
+            return serializer.isEmpty() ? "raw" : resourcePath(serializer);
+        }
+
+        if (path.startsWith("spectrum_")) {
+            return path.substring("spectrum_".length());
+        }
+
+        return path;
+    }
+
+    /** Stored parameter value, falling back to the recipe type's declared default. */
+    private String parameterValue(String key) {
+        String stored = parameters.get(key);
+        if (stored != null && !stored.isBlank()) {
+            return stored.trim();
+        }
+        return RecipeTypeRegistry.get(typeId)
+                .flatMap(type -> type.parameter(key))
+                .map(ParameterDefinition::defaultValue)
+                .orElse("")
+                .trim();
+    }
+
+    /** Path part of a resource location; "mod:machine" -> "machine". */
+    private static String resourcePath(String id) {
+        int colon = id.indexOf(':');
+        return colon >= 0 ? id.substring(colon + 1) : id;
+    }
+
+    /** First output-like slot used for automatic ids. */
+    private SlotContent primaryOutput() {
+        return slots.entrySet().stream()
+                .filter(e -> isOutputKey(e.getKey()))
+                .map(Map.Entry::getValue)
+                .filter(content -> !content.isEmpty())
+                .findFirst()
+                .orElse(SlotContent.EMPTY);
+    }
+
+    /**
+     * Built-in layouts traditionally use output*, while integrations also use
+     * itemOut*, fluidOut* and results*. Keep the heuristic here so custom codegen
+     * layouts receive automatic ids without needing special UI code.
+     */
+    private static boolean isOutputKey(String key) {
+        return key.startsWith("output")
+                || key.startsWith("itemOut")
+                || key.startsWith("fluidOut")
+                || key.startsWith("result");
     }
 
     /**
@@ -178,6 +291,7 @@ public final class RecipeInstance {
                 slots.put(base + i, legacy.get(i));
             }
         }
+        refreshAutoRecipeId();
     }
 
     /** Parameter value or the definition default when unset. */
@@ -222,6 +336,7 @@ public final class RecipeInstance {
         } else {
             parameters.put(key, value);
         }
+        refreshAutoRecipeId();
     }
 
     public Map<String, String> parameters() {
@@ -232,6 +347,7 @@ public final class RecipeInstance {
     public RecipeInstance copy() {
         RecipeInstance copy = new RecipeInstance(typeId);
         copy.recipeId = recipeId.isEmpty() ? "" : recipeId + "_copy";
+        copy.autoRecipeId = false;
         copy.group = group;
         copy.comment = comment;
         copy.targetFile = targetFile;
@@ -258,6 +374,7 @@ public final class RecipeInstance {
         json.addProperty("uid", uid);
         json.addProperty("type", typeId);
         if (!recipeId.isEmpty()) json.addProperty("recipeId", recipeId);
+        if (autoRecipeId) json.addProperty("autoRecipeId", true);
         if (!group.isEmpty()) json.addProperty("group", group);
         if (!comment.isEmpty()) json.addProperty("comment", comment);
         if (!targetFile.isEmpty()) json.addProperty("targetFile", targetFile);
@@ -276,6 +393,7 @@ public final class RecipeInstance {
         String uid = json.has("uid") ? json.get("uid").getAsString() : UUID.randomUUID().toString();
         RecipeInstance recipe = new RecipeInstance(uid, json.get("type").getAsString());
         if (json.has("recipeId")) recipe.recipeId = json.get("recipeId").getAsString();
+        if (json.has("autoRecipeId")) recipe.autoRecipeId = json.get("autoRecipeId").getAsBoolean();
         if (json.has("group")) recipe.group = json.get("group").getAsString();
         if (json.has("comment")) recipe.comment = json.get("comment").getAsString();
         if (json.has("targetFile")) recipe.targetFile = json.get("targetFile").getAsString();
@@ -289,6 +407,9 @@ public final class RecipeInstance {
         if (json.has("params")) {
             JsonObject paramJson = json.getAsJsonObject("params");
             paramJson.entrySet().forEach(e -> recipe.parameters.put(e.getKey(), e.getValue().getAsString()));
+        }
+        if (recipe.autoRecipeId) {
+            recipe.refreshAutoRecipeId();
         }
         return recipe;
     }
