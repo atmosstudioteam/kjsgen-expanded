@@ -160,7 +160,7 @@ public final class RecipeInstance {
      * Keep a readable, deterministic id in sync with the first output while the
      * id is still automatic. Example:
      * {@code kjsgen:spectrum_pedestal + minecraft:diamond ->
-     * kubejs:spectrum_pedestal/minecraft/diamond}.
+     * conflux:spectrum_pedestal/minecraft/diamond}.
      */
     private void refreshAutoRecipeId() {
         if (!autoRecipeId && !recipeId.isEmpty()) {
@@ -177,7 +177,7 @@ public final class RecipeInstance {
 
         String typePath = typeId.contains(":") ? typeId.substring(typeId.indexOf(':') + 1) : typeId;
         String outputPath = output.id().replace(':', '/');
-        recipeId = "kubejs:" + typePath + "/" + outputPath;
+        recipeId = "conflux:" + typePath + "/" + outputPath;
         autoRecipeId = true;
     }
 
